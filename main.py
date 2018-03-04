@@ -1,15 +1,15 @@
 import os
+import string
+import re
 
 from tkinter import *
 from tkinter import ttk, messagebox
 from DialogueData import *
-from Popup import Popup
+from tkSimpleDialog import Dialog
 from Consts import DragState
 
 # TODO make buttons for the right click menu stuff
 # TODO some nice bg colors and stuff for list
-# TODO add id duplicating
-# TODO natural language alphabetic sorting
 # TODO load from xml
 # TODO save to xml
 
@@ -21,6 +21,8 @@ class DialogueEditor:
         master.geometry("800x600")
 
         self.dragstate = DragState.NONE
+        self.nodemodify = None
+        self.entrymodify = None
 
         self._setupMenuBar(master)
         self._setupRightClick(master)
@@ -86,13 +88,51 @@ class DialogueEditor:
         self.popupmenu.add_command(label='Rename', command=self._renameObjectAction)
         self.popupmenu.add_separator()
         self.popupmenu.add_command(label='Delete', command=self._deleteObjectAction)
+
+    def _incrementName(self, name, validation):
+        num = 0
+        match = re.match('.*?([0-9]+)$', name)
+        if match:
+            num = int(match.group(1))
+        stripped = name.rstrip(string.digits)
+        newname = stripped + str(num)
+        while not validation(newname):
+            num += 1
+            newname = stripped + str(num)
+        return newname
+
+    def _validateName(self, name):
+        return 1
+
+    def _validateNewGroupName(self, name):
+        for node in self.nodemodify.children:
+            if node.id == name:
+                return 0
+        return self._validateName(name)
+
+    def _validateRenameGroup(self, name):
+        for node in self.nodemodify.parent.children:
+            if node.id == name:
+                return 0
+        return self._validateName(name)
     
+    def _validateNewEntryName(self, name):
+        for entry in self.nodemodify.entries:
+            if entry.id == name:
+                return 0
+        return self._validateName(name)
+    
+    def _validateRenameEntry(self, name):
+        for entry in self.entrymodify.parent.entries:
+            if entry.id == name:
+                return 0
+        return self._validateName(name)
+
     def _newGroupAction(self):
-        node = self.content.findNode(self.treeSelection[0])
-        popup = Popup(self.master, "New Group")
+        self.nodemodify = self.content.findNode(self.treeSelection[0])
+        popup = Dialog(self.master, "New Group", validate=self._validateNewGroupName)
         if popup.result:
-            # TODO This result must be validated!
-            result = node.addNode(popup.result)
+            result = self.nodemodify.addNode(popup.result)
             self._populateTreeRoot()
             iid = self._findTreeIndexByPath(result.parent.getPath())
             self.tree.item(iid, open=YES)
@@ -100,11 +140,10 @@ class DialogueEditor:
             self.tree.selection_set(iid)
     
     def _newEntryAction(self):
-        node = self.content.findNode(self.treeSelection[0])
-        popup = Popup(self.master, "New Entry")
+        self.nodemodify = self.content.findNode(self.treeSelection[0])
+        popup = Dialog(self.master, "New Entry", validate=self._validateNewEntryName)
         if popup.result:
-            # TODO This result must be validated!
-            entry = node.addEntry(popup.result)
+            entry = self.nodemodify.addEntry(popup.result)
             self._populateTreeRoot()
             iid = self._findTreeIndexByPath(entry.parent.getPath())
             self.tree.item(iid, open=YES)
@@ -112,29 +151,26 @@ class DialogueEditor:
             self.tree.selection_set(iid)
     
     def _renameObjectAction(self):
-        # TODO validate the changed name
-        # TODO check for no change
-        # TODO pre-populate the popup
         renametype = self.treeSelection[3]
         if renametype == 'group':
-            node = self.content.findNode(self.treeSelection[0])
-            popup = Popup(self.master, 'Rename Group')
+            self.nodemodify = self.content.findNode(self.treeSelection[0])
+            popup = Dialog(self.master, 'Rename Group', inittext=self.nodemodify.id, validate=self._validateRenameGroup)
             if popup.result:
                 openstate = self.tree.item(self.tree.selection())['open']
-                node.id = popup.result
-                node.parent.sortNodes()
+                self.nodemodify.id = popup.result
+                self.nodemodify.parent.sortNodes()
                 self._populateTreeRoot()
-                iid = self._findTreeIndexByPath(node.getPath())
+                iid = self._findTreeIndexByPath(self.nodemodify.getPath())
                 self.tree.selection_set(iid)
                 self.tree.item(iid, open=openstate)
         elif renametype == 'entry':
-            entry = self.content.findEntry(self.treeSelection[0])
-            popup = Popup(self.master, 'Rename Entry')
+            self.entrymodify = self.content.findEntry(self.treeSelection[0])
+            popup = Dialog(self.master, 'Rename Entry', inittext=self.entrymodify.id, validate=self._validateRenameEntry)
             if popup.result:
-                entry.id = popup.result
-                entry.parent.sortEntries()
+                self.entrymodify.id = popup.result
+                self.entrymodify.parent.sortEntries()
                 self._populateTreeRoot()
-                iid = self._findTreeIndexByPath(entry.getPath())
+                iid = self._findTreeIndexByPath(self.entrymodify.getPath())
                 self.tree.selection_set(iid)
 
     def _deleteObjectAction(self):
@@ -163,15 +199,11 @@ class DialogueEditor:
     def _duplicateIdAction(self):
         duplicatetype = self.treeSelection[3]
         if duplicatetype == 'group':
-            original = self.content.findNode(self.treeSelection[0])
-            # TODO Validate new name!
-            newname = original.id + '1'
-            original.parent.addNode(newname)
+            self.nodemodify = self.content.findNode(self.treeSelection[0])
+            self.nodemodify.parent.addNode(self._incrementName(self.nodemodify.id, self._validateRenameGroup))
         elif duplicatetype == 'entry':
-            original = self.content.findEntry(self.treeSelection[0])
-            # TODO validate new name!
-            newname = original.id + '1'
-            original.parent.addEntry(newname)
+            self.entrymodify = self.content.findEntry(self.treeSelection[0])
+            self.entrymodify.parent.addEntry(self._incrementName(self.entrymodify.id, self._validateRenameEntry))
         self._populateTreeRoot()
 
     def _createTree(self, master):
@@ -313,7 +345,6 @@ class DialogueEditor:
     def _leftClickTreeRelease(self, event):
         if self.dragstate != DragState.NONE:
             if self.dragstate == DragState.SUCCESS:
-                # TODO Entry
                 newparent = self.content.findNode(self._getItemPathByTreeId(self.tree.selection()))
                 movetype = self.treeSelection[3]
                 if movetype == 'group':

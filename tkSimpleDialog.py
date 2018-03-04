@@ -2,10 +2,10 @@ from tkinter import *
 
 class Dialog(Toplevel):
 
-    def __init__(self, parent, title = None):
-
+    def __init__( self,  parent, title=None, label='Name:', inittext='', validate=None ):
         Toplevel.__init__(self, parent)
         self.transient(parent)
+        self.validationfunc = validate
 
         if title:
             self.title(title)
@@ -15,7 +15,7 @@ class Dialog(Toplevel):
         self.result = None
 
         body = Frame(self)
-        self.initial_focus = self.body(body)
+        self.initial_focus = self.body(body, label, inittext)
         body.pack(padx=5, pady=5)
 
         self.buttonbox()
@@ -37,11 +37,12 @@ class Dialog(Toplevel):
     #
     # construction hooks
 
-    def body(self, master):
-        # create dialog body.  return widget that should have
-        # initial focus.  this method should be overridden
-
-        pass
+    def body(self, master, label, init):
+        Label(master, text=label).grid(row=0)
+        self.e1 = Entry(master)
+        self.e1.insert(END, init)
+        self.e1.grid(row=0, column=1)
+        return self.e1 # initial focus
 
     def buttonbox(self):
         # add standard button box. override if you don't want the
@@ -84,7 +85,9 @@ class Dialog(Toplevel):
     # command hooks
 
     def validate(self):
-        return 1 # override
+        if self.validationfunc == None:
+            return 1
+        return self.validationfunc(self.e1.get())
 
     def apply(self):
-        pass # override
+        self.result = self.e1.get()
