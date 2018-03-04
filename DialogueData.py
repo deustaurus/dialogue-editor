@@ -24,11 +24,19 @@ class DialogueNode:
     def addNode(self, id):
         node = DialogueNode(id, self)
         self.children.append(node)
-        self.children.sort(key=lambda x: x.id)
+        self.sortNodes()
         return node
     
     def addEntry(self, id, entrytype=EntryType.NONE):
-        self.entries.append(DialogueEntry(id, entrytype, self))
+        result = DialogueEntry(id, entrytype, self)
+        self.entries.append(result)
+        self.sortEntries()
+        return result
+    
+    def sortNodes(self):
+        self.children.sort(key=lambda x: x.id)
+
+    def sortEntries(self):
         self.entries.sort(key=lambda x: x.id)
 
     def getPath(self):

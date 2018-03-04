@@ -83,16 +83,24 @@ class DialogueEditor:
         popup = Popup(self.master, "New Group")
         if popup.result:
             # TODO This result must be validated!
-            node.addNode(popup.result)
+            result = node.addNode(popup.result)
             self._populateTreeRoot()
+            iid = self._findNode(result.parent.getPath())
+            self.tree.item(iid, open=YES)
+            iid = self._findNode(result.getPath())
+            self.tree.selection_set(iid)
     
     def _newEntryAction(self):
         node = self.content.findNode(self.treeSelection[0])
         popup = Popup(self.master, "New Entry")
         if popup.result:
             # TODO This result must be validated!
-            node.addEntry(popup.result)
+            entry = node.addEntry(popup.result)
             self._populateTreeRoot()
+            iid = self._findNode(entry.parent.getPath())
+            self.tree.item(iid, open=YES)
+            iid = self._findNode(entry.getPath())
+            self.tree.selection_set(iid)
     
     def _renameObject(self):
         # TODO validate the changed name
@@ -103,14 +111,22 @@ class DialogueEditor:
             node = self.content.findNode(self.treeSelection[0])
             popup = Popup(self.master, 'Rename Group')
             if popup.result:
+                openstate = self.tree.item(self.tree.selection())['open']
                 node.id = popup.result
+                node.parent.sortNodes()
                 self._populateTreeRoot()
+                iid = self._findNode(node.getPath())
+                self.tree.selection_set(iid)
+                self.tree.item(iid, open=openstate)
         elif renametype == 'entry':
             entry = self.content.findEntry(self.treeSelection[0])
             popup = Popup(self.master, 'Rename Entry')
             if popup.result:
                 entry.id = popup.result
+                entry.parent.sortEntries()
                 self._populateTreeRoot()
+                iid = self._findNode(entry.getPath())
+                self.tree.selection_set(iid)
 
     def _deleteObject(self):
         deletetype = self.treeSelection[3]
@@ -176,6 +192,18 @@ class DialogueEditor:
                 self.tree.item(child, open=YES)
                 openstate.remove(key)
             self._applyOpenState(child, openstate)
+    
+    def _findNode(self, name, treenode=None):
+        children = self.tree.get_children(treenode)
+        for child in children:
+            item = self.tree.item(child)['values'][0]
+            if item == name:
+                return child
+            childres = self._findNode(name, child)
+            if childres:
+                return childres
+        # We shouldn't get here, but TODO handle this gracefully?
+        return None
 
     def _populateTreeRoot(self):
         # Cache the whole tree state to preserve open states
