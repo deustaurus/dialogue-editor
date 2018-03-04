@@ -21,18 +21,22 @@ class DialogueEditor:
 
     def __init__(self, master):
         self.master = master
+
         master.title("Dialogue Editor")
         master.geometry("800x600")
+        master.rowconfigure(0, weight=1)
+        master.columnconfigure(1, weight=1)
+        self._setupMenuBar(master)
 
-        self.tree = DialogueTree(master,self)
+        self.treeview = DialogueTree(master,self)
         self.editpanel = EntryEditPanel(master,self)
 
+        # Editing Content
         self.editEntry = None
         self.nodemodify = None
         self.entrymodify = None
 
-        self._setupMenuBar(master)
-
+        # Dummy Content
         self.content = DialogueNode('Content')
         common = self.content.addNode('Common 10')
         common.addEntry('Chum')
@@ -53,20 +57,14 @@ class DialogueEditor:
         bome.addEntry('Crunt')
         bome.addNode('Crome')  
 
-        master.rowconfigure(0, weight=1)
-        master.columnconfigure(1, weight=1)
-
-        self._refreshViews()
-
-    def test(self):
-        print("Test")
+        self.refreshViews()
 
     def _setupMenuBar(self, master):
         menubar = Menu(master)
 
         filemenu = Menu(menubar, tearoff=0)
-        filemenu.add_command(label="Open", command=self.test)
-        filemenu.add_command(label="Save", command=self.test)
+        filemenu.add_command(label="Open")
+        filemenu.add_command(label="Save")
         filemenu.add_separator()
         filemenu.add_command(label="Exit", command=master.quit)
         menubar.add_cascade(label="File", menu=filemenu)
@@ -117,62 +115,62 @@ class DialogueEditor:
                 return 0
         return self._validateName(name)
 
-    def _newGroupAction(self):
-        self.nodemodify = self.content.findNode(self.tree.treeSelection[0])
+    def newGroupAction(self):
+        self.nodemodify = self.content.findNode(self.treeview.treeSelection[0])
         popup = Dialog(self.master, "New Group", validate=self._validateNewGroupName)
         if popup.result:
             result = self.nodemodify.addNode(popup.result)
-            self._refreshViews()
-            iid = self.tree._findTreeIndexByPath(result.parent.getPath())
+            self.refreshViews()
+            iid = self.treeview._findTreeIndexByPath(result.parent.getPath())
             if iid:
-                self.tree.tree.item(iid, open=YES)
-                iid = self.tree._findTreeIndexByPath(result.getPath())
+                self.treeview.tree.item(iid, open=YES)
+                iid = self.treeview._findTreeIndexByPath(result.getPath())
                 if iid:
-                    self.tree.tree.selection_set(iid)
+                    self.treeview.tree.selection_set(iid)
     
-    def _newEntryAction(self):
-        self.nodemodify = self.content.findNode(self.tree.treeSelection[0])
+    def newEntryAction(self):
+        self.nodemodify = self.content.findNode(self.treeview.treeSelection[0])
         popup = Dialog(self.master, "New Entry", validate=self._validateNewEntryName)
         if popup.result:
             entry = self.nodemodify.addEntry(popup.result)
             self.editEntry = entry
-            self._refreshViews()
-            iid = self.tree._findTreeIndexByPath(entry.parent.getPath())
+            self.refreshViews()
+            iid = self.treeview._findTreeIndexByPath(entry.parent.getPath())
             if iid:
-                self.tree.tree.item(iid, open=YES)
-                iid = self.tree._findTreeIndexByPath(entry.getPath())
+                self.treeview.tree.item(iid, open=YES)
+                iid = self.treeview._findTreeIndexByPath(entry.getPath())
                 if iid:
-                    self.tree.tree.selection_set(iid)
+                    self.treeview.tree.selection_set(iid)
     
-    def _renameObjectAction(self):
-        renametype = self.tree.treeSelection[3]
+    def renameObjectAction(self):
+        renametype = self.treeview.treeSelection[3]
         if renametype == 'group':
-            self.nodemodify = self.content.findNode(self.tree.treeSelection[0])
+            self.nodemodify = self.content.findNode(self.treeview.treeSelection[0])
             popup = Dialog(self.master, 'Rename Group', inittext=self.nodemodify.id, validate=self._validateRenameGroup)
             if popup.result:
-                openstate = self.tree.tree.item(self.tree.tree.selection())['open']
+                openstate = self.treeview.tree.item(self.treeview.tree.selection())['open']
                 self.nodemodify.id = popup.result
                 self.nodemodify.parent.sortNodes()
-                self._refreshViews()
-                iid = self.tree._findTreeIndexByPath(self.nodemodify.getPath())
+                self.refreshViews()
+                iid = self.treeview._findTreeIndexByPath(self.nodemodify.getPath())
                 if iid:
-                    self.tree.tree.selection_set(iid)
-                    self.tree.tree.item(iid, open=openstate)
+                    self.treeview.tree.selection_set(iid)
+                    self.treeview.tree.item(iid, open=openstate)
         elif renametype == 'entry':
-            self.entrymodify = self.content.findEntry(self.tree.treeSelection[0])
+            self.entrymodify = self.content.findEntry(self.treeview.treeSelection[0])
             popup = Dialog(self.master, 'Rename Entry', inittext=self.entrymodify.id, validate=self._validateRenameEntry)
             if popup.result:
                 self.entrymodify.id = popup.result
                 self.entrymodify.parent.sortEntries()
-                self._refreshViews()
-                iid = self.tree._findTreeIndexByPath(self.entrymodify.getPath())
+                self.refreshViews()
+                iid = self.treeview._findTreeIndexByPath(self.entrymodify.getPath())
                 if iid:
-                    self.tree.tree.selection_set(iid)
+                    self.treeview.tree.selection_set(iid)
 
-    def _deleteObjectAction(self):
-        deletetype = self.tree.treeSelection[3]
+    def deleteObjectAction(self):
+        deletetype = self.treeview.treeSelection[3]
         if deletetype == 'group':
-            node = self.content.findNode(self.tree.treeSelection[0])
+            node = self.content.findNode(self.treeview.treeSelection[0])
             # TODO Warn about how many children we're deleting?
             if messagebox.askyesno(
                 'Delete Node?', 
@@ -181,7 +179,7 @@ class DialogueEditor:
             ):
                 node.parent.children.remove(node)
         elif deletetype == 'entry':
-            entry = self.content.findEntry(self.tree.treeSelection[0])
+            entry = self.content.findEntry(self.treeview.treeSelection[0])
             # TODO Warn about how many pages we're deleting
             if messagebox.askyesno(
                 'Delete Entry?',
@@ -189,23 +187,23 @@ class DialogueEditor:
                 default=messagebox.NO
             ):
                 entry.parent.entries.remove(entry)
-        self._refreshViews()
+        self.refreshViews()
     
-    def _duplicateIdAction(self):
-        duplicatetype = self.tree.treeSelection[3]
+    def duplicateIdAction(self):
+        duplicatetype = self.treeview.treeSelection[3]
         if duplicatetype == 'group':
-            self.nodemodify = self.content.findNode(self.tree.treeSelection[0])
+            self.nodemodify = self.content.findNode(self.treeview.treeSelection[0])
             self.nodemodify.parent.addNode(self._incrementName(self.nodemodify.id, self._validateRenameGroup))
         elif duplicatetype == 'entry':
-            self.entrymodify = self.content.findEntry(self.tree.treeSelection[0])
+            self.entrymodify = self.content.findEntry(self.treeview.treeSelection[0])
             self.entrymodify.parent.addEntry(self._incrementName(self.entrymodify.id, self._validateRenameEntry))
-        self._refreshViews()
+        self.refreshViews()
 
-    def _refreshViews(self):
-        self.tree._populateTreeRoot()
+    def refreshViews(self):
+        self.treeview.refreshView()
         self.editpanel._populateEntryEditing()
 
-    def _getItemPathByString(self, string):
+    def getItemPathByString(self, string):
         return self.content.findNode(string).getPath()
 
 root = Tk()

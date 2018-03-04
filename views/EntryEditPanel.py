@@ -1,9 +1,11 @@
 from tkinter import *
 from tkinter import ttk
+from main import DialogueEditor
 
 class EntryEditPanel:
 
-    def __init__(self, master, main):
+    def __init__(self, master, main=DialogueEditor):
+        self.master = master
         self.main = main
 
         entryFrame = Frame(master)

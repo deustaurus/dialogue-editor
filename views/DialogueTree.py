@@ -1,22 +1,25 @@
 from tkinter import *
 from tkinter import ttk
 from data.Consts import DragState
+from main import DialogueEditor
 
 class DialogueTree:
 
-    def __init__(self, master, main):        
-        self.dragstate = DragState.NONE
+    def __init__(self, master, main=DialogueEditor):
+        self.master = master
         self.main = main
+
+        self.dragstate = DragState.NONE
 
         treeFrame = Frame(master)
         treeFrame.grid(row=0, column=0, sticky=NSEW)
 
         self._createTree(treeFrame)
-        self._setupRightClick(master)
+        self._createRightClickMenu(master)
 
     def _createTree(self, master):
-        self.dataCols = ('group', 'type', 'pages')
-        self.tree = ttk.Treeview(columns=self.dataCols, displaycolumns=['type','pages'], selectmode='browse')
+        dataCols = ('group', 'type', 'pages')
+        self.tree = ttk.Treeview(columns=dataCols, displaycolumns=['type','pages'], selectmode='browse')
         yscroll = ttk.Scrollbar(orient=VERTICAL, command=self.tree.yview)
         xscroll = ttk.Scrollbar(orient=HORIZONTAL, command=self.tree.xview)
         self.tree['yscroll'] = yscroll.set
@@ -41,16 +44,16 @@ class DialogueTree:
         self.tree.bind("<B1-Motion>", self._leftClickTreeMove, add='+')
         self.tree.bind('<Double-1>', self._doubleClickTree)
 
-    def _setupRightClick(self, master):
+    def _createRightClickMenu(self, master):
         self.popupmenu = Menu(master, tearoff=0)
 
-        self.popupmenu.add_command(label='New Group', command=self.main._newGroupAction)
-        self.popupmenu.add_command(label='New Entry', command=self.main._newEntryAction)
-        self.popupmenu.add_command(label='Duplicate Id', command=self.main._duplicateIdAction)
+        self.popupmenu.add_command(label='New Group', command=self.main.newGroupAction)
+        self.popupmenu.add_command(label='New Entry', command=self.main.newEntryAction)
+        self.popupmenu.add_command(label='Duplicate Id', command=self.main.duplicateIdAction)
         self.popupmenu.add_separator()
-        self.popupmenu.add_command(label='Rename', command=self.main._renameObjectAction)
+        self.popupmenu.add_command(label='Rename', command=self.main.renameObjectAction)
         self.popupmenu.add_separator()
-        self.popupmenu.add_command(label='Delete', command=self.main._deleteObjectAction)
+        self.popupmenu.add_command(label='Delete', command=self.main.deleteObjectAction)
 
     def _rightClickTree(self, event):
         # Clear any drag state
@@ -114,7 +117,7 @@ class DialogueTree:
                     moveitem.parent = newparent
                     newparent.entries.append(moveitem)
                     newparent.sortEntries()
-                self.main._refreshViews()
+                self.main.refreshViews()
                 self.tree.item(self._findTreeIndexByPath(newparent.getPath()), open=YES)
                 self.tree.selection_set(self._findTreeIndexByPath(moveitem.getPath()))
             else:
@@ -130,7 +133,7 @@ class DialogueTree:
         if iid:
             self.dragstate = DragState.DRAG
             movepath = self._getItemPathByTreeId(iid)
-            currentpath = self.main._getItemPathByString(self.treeSelection[0])
+            currentpath = self.main.getItemPathByString(self.treeSelection[0])
             # First check what type of move we're doing
             movetype = self.treeSelection[3]
             if movetype == 'group':
@@ -165,13 +168,13 @@ class DialogueTree:
             if val[3] != 'entry':
                 return
             self.main.editEntry = self.main.content.findEntry(val[0])
-            self.main._refreshViews()
+            self.main.refreshViews()
     
     def _getItemValuesByTreeId(self, id):
         return self.tree.item(id)['values']
     
     def _getItemPathByTreeId(self, id):
-        return self.main._getItemPathByString(self._getItemValuesByTreeId(id)[0])
+        return self.main.getItemPathByString(self._getItemValuesByTreeId(id)[0])
     
     def _findTreeIndexByPath(self, path, treenode=None):
         children = self.tree.get_children(treenode)
@@ -226,3 +229,6 @@ class DialogueTree:
         # Show empty if there are no children or entries in a group
         if len(node.entries) < 1 and len(node.children) < 1:
             self.tree.insert(treenode, 0, text='[Empty]', values=[node.getPath(), '', '', 'empty'])
+    
+    def refreshView(self):
+        self._populateTreeRoot()
