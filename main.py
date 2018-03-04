@@ -1,10 +1,10 @@
 import os
 
 from tkinter import *
-from tkinter import ttk
-from tkinter import messagebox
+from tkinter import ttk, messagebox
 from DialogueData import *
 from Popup import Popup
+from Consts import DragState
 
 # TODO make buttons for the right click menu stuff
 # TODO some nice bg colors and stuff for list
@@ -14,10 +14,13 @@ from Popup import Popup
 # TODO save to xml
 
 class DialogueEditor:
+
     def __init__(self, master):
         self.master = master
         master.title("Dialogue Editor")
         master.geometry("800x600")
+
+        self.dragstate = DragState.NONE
 
         self._setupMenuBar(master)
         self._setupRightClick(master)
@@ -25,6 +28,11 @@ class DialogueEditor:
         self.content = DialogueNode('Content')
         common = self.content.addNode('Common')
         common.addEntry('Chum')
+        common.addEntry('Crum_1')
+        common.addEntry('Crum_10')
+        common.addEntry('Crum_100')
+        common.addEntry('Crum_200')
+        common.addEntry('Crum_2')
         common.addEntry('Blum')
         common.addEntry('Cram', EntryType.DIARY)
         table = common.addNode('Table')
@@ -73,10 +81,11 @@ class DialogueEditor:
 
         self.popupmenu.add_command(label='New Group', command=self._newGroupAction)
         self.popupmenu.add_command(label='New Entry', command=self._newEntryAction)
+        self.popupmenu.add_command(label='Duplicate Id', command=self._duplicateIdAction)
         self.popupmenu.add_separator()
-        self.popupmenu.add_command(label='Rename', command=self._renameObject)
+        self.popupmenu.add_command(label='Rename', command=self._renameObjectAction)
         self.popupmenu.add_separator()
-        self.popupmenu.add_command(label='Delete', command=self._deleteObject)
+        self.popupmenu.add_command(label='Delete', command=self._deleteObjectAction)
     
     def _newGroupAction(self):
         node = self.content.findNode(self.treeSelection[0])
@@ -85,9 +94,9 @@ class DialogueEditor:
             # TODO This result must be validated!
             result = node.addNode(popup.result)
             self._populateTreeRoot()
-            iid = self._findNode(result.parent.getPath())
+            iid = self._findTreeIndexByPath(result.parent.getPath())
             self.tree.item(iid, open=YES)
-            iid = self._findNode(result.getPath())
+            iid = self._findTreeIndexByPath(result.getPath())
             self.tree.selection_set(iid)
     
     def _newEntryAction(self):
@@ -97,12 +106,12 @@ class DialogueEditor:
             # TODO This result must be validated!
             entry = node.addEntry(popup.result)
             self._populateTreeRoot()
-            iid = self._findNode(entry.parent.getPath())
+            iid = self._findTreeIndexByPath(entry.parent.getPath())
             self.tree.item(iid, open=YES)
-            iid = self._findNode(entry.getPath())
+            iid = self._findTreeIndexByPath(entry.getPath())
             self.tree.selection_set(iid)
     
-    def _renameObject(self):
+    def _renameObjectAction(self):
         # TODO validate the changed name
         # TODO check for no change
         # TODO pre-populate the popup
@@ -115,7 +124,7 @@ class DialogueEditor:
                 node.id = popup.result
                 node.parent.sortNodes()
                 self._populateTreeRoot()
-                iid = self._findNode(node.getPath())
+                iid = self._findTreeIndexByPath(node.getPath())
                 self.tree.selection_set(iid)
                 self.tree.item(iid, open=openstate)
         elif renametype == 'entry':
@@ -125,10 +134,10 @@ class DialogueEditor:
                 entry.id = popup.result
                 entry.parent.sortEntries()
                 self._populateTreeRoot()
-                iid = self._findNode(entry.getPath())
+                iid = self._findTreeIndexByPath(entry.getPath())
                 self.tree.selection_set(iid)
 
-    def _deleteObject(self):
+    def _deleteObjectAction(self):
         deletetype = self.treeSelection[3]
         if deletetype == 'group':
             node = self.content.findNode(self.treeSelection[0])
@@ -150,6 +159,20 @@ class DialogueEditor:
             ):
                 entry.parent.entries.remove(entry)
                 self._populateTreeRoot()
+    
+    def _duplicateIdAction(self):
+        duplicatetype = self.treeSelection[3]
+        if duplicatetype == 'group':
+            original = self.content.findNode(self.treeSelection[0])
+            # TODO Validate new name!
+            newname = original.id + '1'
+            original.parent.addNode(newname)
+        elif duplicatetype == 'entry':
+            original = self.content.findEntry(self.treeSelection[0])
+            # TODO validate new name!
+            newname = original.id + '1'
+            original.parent.addEntry(newname)
+        self._populateTreeRoot()
 
     def _createTree(self, master):
         self.dataCols = ('group', 'type', 'pages')
@@ -173,6 +196,9 @@ class DialogueEditor:
         master.columnconfigure(0, weight=1)
 
         self.tree.bind('<Button-3>', self._rightClickTree)
+        self.tree.bind("<ButtonPress-1>", self._leftClickTree)
+        self.tree.bind("<ButtonRelease-1>", self._leftClickTreeRelease, add='+')
+        self.tree.bind("<B1-Motion>", self._leftClickTreeMove, add='+')
         self._populateTreeRoot()
 
     def _cacheOpenState(self, treenode, openstate):
@@ -186,20 +212,18 @@ class DialogueEditor:
     def _applyOpenState(self, treenode, openstate):
         children = self.tree.get_children(treenode)
         for child in children:
-            item = self.tree.item(child)
-            key = item['values'][0]
+            key = self._getItemValues(child)[0]
             if key in openstate:
                 self.tree.item(child, open=YES)
                 openstate.remove(key)
             self._applyOpenState(child, openstate)
     
-    def _findNode(self, name, treenode=None):
+    def _findTreeIndexByPath(self, path, treenode=None):
         children = self.tree.get_children(treenode)
         for child in children:
-            item = self.tree.item(child)['values'][0]
-            if item == name:
+            if self._getItemValues(child)[0] == path:
                 return child
-            childres = self._findNode(name, child)
+            childres = self._findTreeIndexByPath(path, child)
             if childres:
                 return childres
         # We shouldn't get here, but TODO handle this gracefully?
@@ -209,63 +233,138 @@ class DialogueEditor:
         # Cache the whole tree state to preserve open states
         openstate = []
         self._cacheOpenState(None,openstate)
-
         self.tree.delete(*self.tree.get_children())
         self._populateTree(self.content, '')
-        self.tree.item(self.tree.get_children(), open=YES)
-        
+        self.tree.item(self.tree.get_children(), open=YES)        
         self._applyOpenState(None,openstate)
+    
+    def _setItemOpen(self, id, openstate):
+        self.tree.item(id, open=openstate)
+    
+    def _getItemValues(self, id):
+        return self.tree.item(id)['values']
+
+    def _getItemPathByTreeId(self, id):
+        return self._getItemPathByString(self._getItemValues(id)[0])
+
+    def _getItemPathByString(self, string):
+        return self.content.findNode(string).getPath()
 
     def _populateTree(self, node, tree):
         nodetype = 'group'
         if node.parent == None:
             nodetype = 'root'
         treenode = self.tree.insert(tree, END, text=node.id, values=[node.getPath(), '', '', nodetype])
-
         # Show Entries
         for entry in node.entries:
             self.tree.insert(treenode, END, text=entry.id, values=[entry.getPath(), entry.entrytype.value, len(entry.pages), 'entry'])
-
         # Show children
         for child in node.children:
             self._populateTree(child, treenode)
-        
+        # Show empty if there are no children or entries in a group
         if len(node.entries) < 1 and len(node.children) < 1:
-            self._addEmptyLine(treenode, node)
-
-
-    def _addEmptyLine(self, treenode, node):
-        self.tree.insert(treenode, 0, text='[Empty]', values=[node.getPath(), '', '', 'empty'])
+            self.tree.insert(treenode, 0, text='[Empty]', values=[node.getPath(), '', '', 'empty'])
 
     def _rightClickTree(self, event):
+        # Clear any drag state
+        self.dragstate = DragState.NONE
         iid = self.tree.identify_row(event.y)
         if iid:
             try:
                 # Default settings, group mode
                 self.popupmenu.entryconfig(0, state=ACTIVE) # New Group
                 self.popupmenu.entryconfig(1, state=ACTIVE) # New Entry
-                self.popupmenu.entryconfig(3, state=ACTIVE) # Rename
-                self.popupmenu.entryconfig(5, state=ACTIVE) # Delete
+                self.popupmenu.entryconfig(2, state=ACTIVE) # Duplicate
+                self.popupmenu.entryconfig(4, state=ACTIVE) # Rename
+                self.popupmenu.entryconfig(6, state=ACTIVE) # Delete
                 # Get information
                 self.tree.selection_set(iid)
-                self.treeSelection = self.tree.item(iid)['values']
+                self.treeSelection = self._getItemValues(iid)
                 seltype = self.treeSelection[3]
                 # Check information
                 if seltype == 'root':
                     # Root content can't be deleted, or have entries added
-                    self.popupmenu.entryconfig(1, state=DISABLED)
-                    self.popupmenu.entryconfig(3, state=DISABLED)
-                    self.popupmenu.entryconfig(5, state=DISABLED)
+                    self.popupmenu.entryconfig(1, state=DISABLED) # New Entry
+                    self.popupmenu.entryconfig(2, state=DISABLED) # Duplicate
+                    self.popupmenu.entryconfig(4, state=DISABLED) # Rename
+                    self.popupmenu.entryconfig(6, state=DISABLED) # Delete
                 elif seltype == 'empty':
                     # You can't delete an empty object
-                    self.popupmenu.entryconfig(3, state=DISABLED)
-                    self.popupmenu.entryconfig(5, state=DISABLED)                    
+                    self.popupmenu.entryconfig(2, state=DISABLED) # Duplicate
+                    self.popupmenu.entryconfig(4, state=DISABLED) # Rename
+                    self.popupmenu.entryconfig(6, state=DISABLED) # Delete           
 
                 self.popupmenu.tk_popup(event.x_root + 50, event.y_root + 10, 0)
             finally:
                 self.popupmenu.grab_release()
         else:
             self.tree.selection_set()
+    
+    def _leftClickTree(self, event):
+        iid = self.tree.identify_row(event.y)
+        if iid:
+            val = self._getItemValues(iid)
+            if val[3] == 'root' or val[3] == 'empty':
+                # We don't allow dragging of the root, of course!
+                return
+            self.dragstate = DragState.DRAG
+            self.treeSelection = self._getItemValues(iid)
+
+    def _leftClickTreeRelease(self, event):
+        if self.dragstate != DragState.NONE:
+            if self.dragstate == DragState.SUCCESS:
+                # TODO Entry
+                newparent = self.content.findNode(self._getItemPathByTreeId(self.tree.selection()))
+                movetype = self.treeSelection[3]
+                if movetype == 'group':
+                    moveitem = self.content.findNode(self.treeSelection[0])
+                    moveitem.parent.children.remove(moveitem)
+                    moveitem.parent = newparent
+                    newparent.children.append(moveitem)
+                    newparent.sortNodes()
+                elif movetype == 'entry':
+                    moveitem = self.content.findEntry(self.treeSelection[0])
+                    moveitem.parent.entries.remove(moveitem)
+                    moveitem.parent = newparent
+                    newparent.entries.append(moveitem)
+                    newparent.sortEntries()
+                self._populateTreeRoot()
+            self.tree.selection_set()
+            self.dragstate = DragState.NONE
+
+    def _leftClickTreeMove(self, event):
+        if self.dragstate == DragState.NONE:
+            # If we're not in the drag state, we don't do the drag
+            return
+        iid = self.tree.identify_row(event.y)
+        if iid:
+            self.dragstate = DragState.DRAG
+            movepath = self._getItemPathByTreeId(iid)
+            currentpath = self._getItemPathByString(self.treeSelection[0])
+            # First check what type of move we're doing
+            movetype = self.treeSelection[3]
+            if movetype == 'group':
+                if self.treeSelection[0] in movepath:                    
+                    # We can't drag a group inside itself
+                    self.tree.selection_set()
+                    return
+                # Group move
+                parentpath = self.content.findNode(self.treeSelection[0]).parent.getPath()
+            elif movetype == 'entry':
+                if len(movepath) < 1:
+                    # Can't drag entries to root
+                    self.tree.selection_set()
+                    return
+                # Entry move
+                parentpath = self.content.findEntry(self.treeSelection[0]).parent.getPath()
+            
+            if parentpath == movepath or movepath == currentpath:
+                self.tree.selection_set()
+                return
+            
+            self.dragstate = DragState.SUCCESS
+            iid = self._findTreeIndexByPath(movepath)
+            self.tree.selection_set(iid)
 
 root = Tk()
 app = DialogueEditor(root)
