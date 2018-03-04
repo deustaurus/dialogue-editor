@@ -2,7 +2,10 @@ import os
 
 from tkinter import *
 from tkinter import ttk
+from tkinter import messagebox
 from Data import *
+
+# TODO make buttons for the right click menu stuff
 
 class DialogueEditor:
     def __init__(self, master):
@@ -60,9 +63,41 @@ class DialogueEditor:
     def _setupRightClick(self, master):
         self.popupmenu = Menu(master, tearoff=0)
 
-        self.popupmenu.add_command(label='New Group')
-        self.popupmenu.add_command(label='New Entry')
-        self.popupmenu.add_command(label='Delete')
+        self.popupmenu.add_command(label='New Group', command=self._newGroupAction)
+        self.popupmenu.add_command(label='New Entry', command=self._newEntryAction)
+        self.popupmenu.add_command(label='Delete', command=self._deleteObject)
+    
+    def _newGroupAction(self):
+        node = self.content.findNode(self.treeSelection[0])
+        print('New Group: ' + node.id)
+    
+    def _newEntryAction(self):
+        node = self.content.findNode(self.treeSelection[0])
+        print('New Entry: ' + node.id)
+    
+    def _deleteObject(self):
+        deletetype = self.treeSelection[3]
+        if deletetype == 'group':
+            node = self.content.findNode(self.treeSelection[0])
+            # TODO Warn about how many children we're deleting?
+            if messagebox.askyesno(
+                'Delete Node?', 
+                'Are you sure you want to delete \"' + node.id + '\"?', 
+                default=messagebox.NO
+            ):
+                node.parent.children.remove(node)
+                self.tree.delete(self.tree.selection())
+        elif deletetype == 'entry':
+            entry = self.content.findEntry(self.treeSelection[0])
+            # TODO Warn about how many pages we're deleting
+            if messagebox.askyesno(
+                'Delete Entry?',
+                'Are you sure you want to delete \"' + entry.id + '\"?',
+                default=messagebox.NO
+            ):
+                # TODO repopulate with empty
+                entry.parent.entries.remove(entry)
+                self.tree.delete(self.tree.selection())
 
     def _createTree(self, master):
         self.dataCols = ('group', 'type', 'pages')
@@ -93,41 +128,40 @@ class DialogueEditor:
         self._populateTree(self.content, '')
 
     def _populateTree(self, node, tree):
+        # This node
         nodetype = 'group'
         if node.parent == None:
             nodetype = 'root'
         treenode = self.tree.insert(tree, END, text=node.id, values=[node.getPath(), '', '', nodetype])
-        for child in node.children:
-            self._populateTree(child, treenode)
+        # Show entries, or Empty, if appropriate
         if len(node.entries) > 0:
             for entry in node.entries:
                 self.tree.insert(treenode, END, text=entry.id, values=[entry.getPath(), entry.entrytype.value, len(entry.pages), 'entry'])
         else:
             if node.parent != None:
                 self.tree.insert(treenode, END, text='[Empty]', values=[node.getPath(), '', '', 'empty'])
+        # Show children
+        for child in node.children:
+            self._populateTree(child, treenode)
 
     def _rightClickTree(self, event):
         iid = self.tree.identify_row(event.y)
         if iid:
             try:
                 # Default settings, group mode
-                self.selectiontype = 'group'
                 self.popupmenu.entryconfig(0, state=ACTIVE)
                 self.popupmenu.entryconfig(1, state=ACTIVE)
                 self.popupmenu.entryconfig(2, state=ACTIVE)
                 # Get information
                 self.tree.selection_set(iid)
-                self.selection = self.tree.item(iid)['values'][2]
-                print(self.tree.item(iid)['values'])
+                self.treeSelection = self.tree.item(iid)['values']
+                seltype = self.treeSelection[3]
                 # Check information
-                if self.selection == 'root':
+                if seltype == 'root':
                     # Root content can't be deleted, or have entries added
                     self.popupmenu.entryconfig(1, state=DISABLED)
                     self.popupmenu.entryconfig(2, state=DISABLED)
-                elif self.selection == 'entry':
-                    # An entry can have anything added to it
-                    self.selectiontype = 'entry'
-                elif self.selection == 'empty':
+                elif seltype == 'empty':
                     # You can't delete an empty object
                     self.popupmenu.entryconfig(2, state=DISABLED)                    
 
