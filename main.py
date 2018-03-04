@@ -4,9 +4,9 @@ import re
 
 from tkinter import *
 from tkinter import ttk, messagebox
-from DialogueData import *
-from tkSimpleDialog import Dialog
-from Consts import DragState
+from data.DialogueData import *
+from data.Consts import DragState
+from views.SimpleDialog import Dialog
 
 # TODO make buttons for the right click menu stuff
 # TODO some nice bg colors and stuff for list
