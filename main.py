@@ -3,9 +3,15 @@ import os
 from tkinter import *
 from tkinter import ttk
 from tkinter import messagebox
-from Data import *
+from DialogueData import *
+from Popup import Popup
 
 # TODO make buttons for the right click menu stuff
+# TODO some nice bg colors and stuff for list
+# TODO add id duplicating
+# TODO natural language alphabetic sorting
+# TODO load from xml
+# TODO save to xml
 
 class DialogueEditor:
     def __init__(self, master):
@@ -27,7 +33,9 @@ class DialogueEditor:
         trag = self.content.addNode('Trag')
         trag.addEntry('Bop')
         trag.addEntry('Lope')
-        self.content.addNode('Bome')        
+        bome = self.content.addNode('Bome')
+        bome.addEntry('Crunt')
+        bome.addNode('Crome')  
 
         treeFrame = Frame(master)
         treeFrame.grid(row=0, column=0, sticky=NSEW)
@@ -65,16 +73,45 @@ class DialogueEditor:
 
         self.popupmenu.add_command(label='New Group', command=self._newGroupAction)
         self.popupmenu.add_command(label='New Entry', command=self._newEntryAction)
+        self.popupmenu.add_separator()
+        self.popupmenu.add_command(label='Rename', command=self._renameObject)
+        self.popupmenu.add_separator()
         self.popupmenu.add_command(label='Delete', command=self._deleteObject)
     
     def _newGroupAction(self):
         node = self.content.findNode(self.treeSelection[0])
-        print('New Group: ' + node.id)
+        popup = Popup(self.master, "New Group")
+        if popup.result:
+            # TODO This result must be validated!
+            node.addNode(popup.result)
+            self._populateTreeRoot()
     
     def _newEntryAction(self):
         node = self.content.findNode(self.treeSelection[0])
-        print('New Entry: ' + node.id)
+        popup = Popup(self.master, "New Entry")
+        if popup.result:
+            # TODO This result must be validated!
+            node.addEntry(popup.result)
+            self._populateTreeRoot()
     
+    def _renameObject(self):
+        # TODO validate the changed name
+        # TODO check for no change
+        # TODO pre-populate the popup
+        renametype = self.treeSelection[3]
+        if renametype == 'group':
+            node = self.content.findNode(self.treeSelection[0])
+            popup = Popup(self.master, 'Rename Group')
+            if popup.result:
+                node.id = popup.result
+                self._populateTreeRoot()
+        elif renametype == 'entry':
+            entry = self.content.findEntry(self.treeSelection[0])
+            popup = Popup(self.master, 'Rename Entry')
+            if popup.result:
+                entry.id = popup.result
+                self._populateTreeRoot()
+
     def _deleteObject(self):
         deletetype = self.treeSelection[3]
         if deletetype == 'group':
@@ -86,7 +123,7 @@ class DialogueEditor:
                 default=messagebox.NO
             ):
                 node.parent.children.remove(node)
-                self.tree.delete(self.tree.selection())
+                self._populateTreeRoot()
         elif deletetype == 'entry':
             entry = self.content.findEntry(self.treeSelection[0])
             # TODO Warn about how many pages we're deleting
@@ -95,13 +132,12 @@ class DialogueEditor:
                 'Are you sure you want to delete \"' + entry.id + '\"?',
                 default=messagebox.NO
             ):
-                # TODO repopulate with empty
                 entry.parent.entries.remove(entry)
-                self.tree.delete(self.tree.selection())
+                self._populateTreeRoot()
 
     def _createTree(self, master):
         self.dataCols = ('group', 'type', 'pages')
-        self.tree = ttk.Treeview(columns=self.dataCols, displaycolumns=['type','pages'])
+        self.tree = ttk.Treeview(columns=self.dataCols, displaycolumns=['type','pages'], selectmode='browse')
         yscroll = ttk.Scrollbar(orient=VERTICAL, command=self.tree.yview)
         xscroll = ttk.Scrollbar(orient=HORIZONTAL, command=self.tree.xview)
         self.tree['yscroll'] = yscroll.set
@@ -123,35 +159,65 @@ class DialogueEditor:
         self.tree.bind('<Button-3>', self._rightClickTree)
         self._populateTreeRoot()
 
+    def _cacheOpenState(self, treenode, openstate):
+        children = self.tree.get_children(treenode)
+        for child in children:
+            self._cacheOpenState(child, openstate)
+            item = self.tree.item(child)
+            if item['open']:
+                openstate.append(item['values'][0])
+
+    def _applyOpenState(self, treenode, openstate):
+        children = self.tree.get_children(treenode)
+        for child in children:
+            item = self.tree.item(child)
+            key = item['values'][0]
+            if key in openstate:
+                self.tree.item(child, open=YES)
+                openstate.remove(key)
+            self._applyOpenState(child, openstate)
+
     def _populateTreeRoot(self):
+        # Cache the whole tree state to preserve open states
+        openstate = []
+        self._cacheOpenState(None,openstate)
+
         self.tree.delete(*self.tree.get_children())
         self._populateTree(self.content, '')
+        self.tree.item(self.tree.get_children(), open=YES)
+        
+        self._applyOpenState(None,openstate)
 
     def _populateTree(self, node, tree):
-        # This node
         nodetype = 'group'
         if node.parent == None:
             nodetype = 'root'
         treenode = self.tree.insert(tree, END, text=node.id, values=[node.getPath(), '', '', nodetype])
-        # Show entries, or Empty, if appropriate
-        if len(node.entries) > 0:
-            for entry in node.entries:
-                self.tree.insert(treenode, END, text=entry.id, values=[entry.getPath(), entry.entrytype.value, len(entry.pages), 'entry'])
-        else:
-            if node.parent != None:
-                self.tree.insert(treenode, END, text='[Empty]', values=[node.getPath(), '', '', 'empty'])
+
+        # Show Entries
+        for entry in node.entries:
+            self.tree.insert(treenode, END, text=entry.id, values=[entry.getPath(), entry.entrytype.value, len(entry.pages), 'entry'])
+
         # Show children
         for child in node.children:
             self._populateTree(child, treenode)
+        
+        if len(node.entries) < 1 and len(node.children) < 1:
+            self._addEmptyLine(treenode, node)
+
+
+    def _addEmptyLine(self, treenode, node):
+        self.tree.insert(treenode, 0, text='[Empty]', values=[node.getPath(), '', '', 'empty'])
 
     def _rightClickTree(self, event):
         iid = self.tree.identify_row(event.y)
         if iid:
             try:
                 # Default settings, group mode
-                self.popupmenu.entryconfig(0, state=ACTIVE)
-                self.popupmenu.entryconfig(1, state=ACTIVE)
-                self.popupmenu.entryconfig(2, state=ACTIVE)
+                self.popupmenu.entryconfig(0, state=ACTIVE) # New Group
+                self.popupmenu.entryconfig(1, state=ACTIVE) # New Entry
+                self.popupmenu.entryconfig(3, state=ACTIVE) # Rename
+                self.popupmenu.entryconfig(5, state=ACTIVE) # Delete
                 # Get information
                 self.tree.selection_set(iid)
                 self.treeSelection = self.tree.item(iid)['values']
@@ -160,12 +226,14 @@ class DialogueEditor:
                 if seltype == 'root':
                     # Root content can't be deleted, or have entries added
                     self.popupmenu.entryconfig(1, state=DISABLED)
-                    self.popupmenu.entryconfig(2, state=DISABLED)
+                    self.popupmenu.entryconfig(3, state=DISABLED)
+                    self.popupmenu.entryconfig(5, state=DISABLED)
                 elif seltype == 'empty':
                     # You can't delete an empty object
-                    self.popupmenu.entryconfig(2, state=DISABLED)                    
+                    self.popupmenu.entryconfig(3, state=DISABLED)
+                    self.popupmenu.entryconfig(5, state=DISABLED)                    
 
-                self.popupmenu.tk_popup(event.x_root, event.y_root, 0)
+                self.popupmenu.tk_popup(event.x_root + 50, event.y_root + 10, 0)
             finally:
                 self.popupmenu.grab_release()
         else:
