@@ -12,6 +12,7 @@ from Consts import DragState
 # TODO some nice bg colors and stuff for list
 # TODO load from xml
 # TODO save to xml
+# TODO undo tree?
 
 class DialogueEditor:
 
@@ -135,9 +136,11 @@ class DialogueEditor:
             result = self.nodemodify.addNode(popup.result)
             self._populateTreeRoot()
             iid = self._findTreeIndexByPath(result.parent.getPath())
-            self.tree.item(iid, open=YES)
-            iid = self._findTreeIndexByPath(result.getPath())
-            self.tree.selection_set(iid)
+            if iid:
+                self.tree.item(iid, open=YES)
+                iid = self._findTreeIndexByPath(result.getPath())
+                if iid:
+                    self.tree.selection_set(iid)
     
     def _newEntryAction(self):
         self.nodemodify = self.content.findNode(self.treeSelection[0])
@@ -146,9 +149,11 @@ class DialogueEditor:
             entry = self.nodemodify.addEntry(popup.result)
             self._populateTreeRoot()
             iid = self._findTreeIndexByPath(entry.parent.getPath())
-            self.tree.item(iid, open=YES)
-            iid = self._findTreeIndexByPath(entry.getPath())
-            self.tree.selection_set(iid)
+            if iid:
+                self.tree.item(iid, open=YES)
+                iid = self._findTreeIndexByPath(entry.getPath())
+                if iid:
+                    self.tree.selection_set(iid)
     
     def _renameObjectAction(self):
         renametype = self.treeSelection[3]
@@ -161,8 +166,9 @@ class DialogueEditor:
                 self.nodemodify.parent.sortNodes()
                 self._populateTreeRoot()
                 iid = self._findTreeIndexByPath(self.nodemodify.getPath())
-                self.tree.selection_set(iid)
-                self.tree.item(iid, open=openstate)
+                if iid:
+                    self.tree.selection_set(iid)
+                    self.tree.item(iid, open=openstate)
         elif renametype == 'entry':
             self.entrymodify = self.content.findEntry(self.treeSelection[0])
             popup = Dialog(self.master, 'Rename Entry', inittext=self.entrymodify.id, validate=self._validateRenameEntry)
@@ -171,7 +177,8 @@ class DialogueEditor:
                 self.entrymodify.parent.sortEntries()
                 self._populateTreeRoot()
                 iid = self._findTreeIndexByPath(self.entrymodify.getPath())
-                self.tree.selection_set(iid)
+                if iid:
+                    self.tree.selection_set(iid)
 
     def _deleteObjectAction(self):
         deletetype = self.treeSelection[3]
@@ -258,7 +265,6 @@ class DialogueEditor:
             childres = self._findTreeIndexByPath(path, child)
             if childres:
                 return childres
-        # We shouldn't get here, but TODO handle this gracefully?
         return None
 
     def _populateTreeRoot(self):
@@ -360,7 +366,11 @@ class DialogueEditor:
                     newparent.entries.append(moveitem)
                     newparent.sortEntries()
                 self._populateTreeRoot()
-            self.tree.selection_set()
+                self.tree.item(self._findTreeIndexByPath(newparent.getPath()), open=YES)
+                self.tree.selection_set(self._findTreeIndexByPath(moveitem.getPath()))
+            else:
+                # If we didn't succeed, reset the selection back to the start
+                self.tree.selection_set(self._findTreeIndexByPath(self.treeSelection[0]))
             self.dragstate = DragState.NONE
 
     def _leftClickTreeMove(self, event):
@@ -393,9 +403,10 @@ class DialogueEditor:
                 self.tree.selection_set()
                 return
             
-            self.dragstate = DragState.SUCCESS
             iid = self._findTreeIndexByPath(movepath)
-            self.tree.selection_set(iid)
+            if iid:
+                self.dragstate = DragState.SUCCESS
+                self.tree.selection_set(iid)
 
 root = Tk()
 app = DialogueEditor(root)
