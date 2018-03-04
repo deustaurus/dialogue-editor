@@ -7,6 +7,7 @@ from tkinter import ttk, messagebox
 from data.DialogueData import *
 from views.SimpleDialog import Dialog
 from views.DialogueTree import DialogueTree
+from views.EntryEditPanel import EntryEditPanel
 
 # TODO Text input validation
 # TODO make buttons for the right click menu stuff
@@ -24,10 +25,11 @@ class DialogueEditor:
         master.geometry("800x600")
 
         self.tree = DialogueTree(master,self)
+        self.editpanel = EntryEditPanel(master,self)
 
+        self.editEntry = None
         self.nodemodify = None
         self.entrymodify = None
-        self.editEntry = None
 
         self._setupMenuBar(master)
 
@@ -51,17 +53,8 @@ class DialogueEditor:
         bome.addEntry('Crunt')
         bome.addNode('Crome')  
 
-        entryFrame = Frame(master)
-        entryFrame.grid(row=0, column=1, sticky=NSEW)
-
-        entryButtonFrame = Frame(master, width=50)
-        entryButtonFrame.grid(row=0, column=2, sticky=NSEW)
-
         master.rowconfigure(0, weight=1)
         master.columnconfigure(1, weight=1)
-
-        self._createPageEdit(entryFrame)
-        self._createPageButtons(entryButtonFrame)
 
         self._refreshViews()
 
@@ -208,156 +201,12 @@ class DialogueEditor:
             self.entrymodify.parent.addEntry(self._incrementName(self.entrymodify.id, self._validateRenameEntry))
         self._refreshViews()
 
-    def _createPageEdit(self, master):
-        contentcolumn = 2
-        self.separatorLeft = ttk.Separator(master, orient=VERTICAL)
-        self.separatorLeft.grid(row=0, column=0, rowspan=7, sticky=NS)
-        self.separatorRight = ttk.Separator(master, orient=VERTICAL)
-        self.separatorRight.grid(row=0, column=4, rowspan=7, sticky=NS)
-
-        self.pageEditTitle = Label(master, text='Title', anchor=W)
-        self.pageEditTitle.grid(row=1, column=contentcolumn, sticky=EW)
-        self.pageEditEntryDetails = Label(master, text='Details', anchor=W)
-        self.pageEditEntryDetails.grid(row=2, column=contentcolumn, sticky=EW)
-
-        pageEditFrame = Frame(master)
-        pageEditFrame.grid(row=4, column=contentcolumn, sticky=NSEW)
-        self.pageEditPane = Text(pageEditFrame)
-        self.pageEditPane.insert(END, 'Lorem ipsum dolor est')
-        self.pageEditPane.grid(row=0, column=0, sticky=NSEW)        
-        yscroll = ttk.Scrollbar(pageEditFrame, orient=VERTICAL, command=self.pageEditPane.yview)
-        self.pageEditPane.configure(yscrollcommand=yscroll.set)
-        yscroll.grid(row=0, column=1, sticky=NS)
-        pageEditFrame.columnconfigure(0, weight=1)
-        pageEditFrame.rowconfigure(0, weight=1)
-
-        self.pageEditDetails = Label(master, text='Page 1 Details', anchor=W)
-        self.pageEditDetails.grid(row=5, column=contentcolumn, sticky=EW)
-
-        master.rowconfigure(0, minsize=15) # Padding
-        master.rowconfigure(4, weight=1)
-        master.rowconfigure(6, minsize=15) # Padding
-        master.columnconfigure(1, minsize=15) # Padding
-        master.columnconfigure(contentcolumn, weight=1)
-        master.columnconfigure(3, minsize=15) # Padding
-    
-    def _createPageButtons(self, master):
-        # TODO These commands
-        contentcolumn = 1
-        textsize = 5
-        padrows = [0,2,4,6,8,10,12,14]
-        self.pagebuttons = []
-
-        button = Button(master, text='Add', width=textsize)
-        button.grid(row=1, column=contentcolumn)
-        self.pagebuttons.append(button)
-
-        button = Button(master, text='Rem', width=textsize)
-        button.grid(row=3, column=contentcolumn)
-        self.pagebuttons.append(button)
-        
-        separator = ttk.Separator(master)
-        separator.grid(row=5, column=0, columnspan=5, sticky=EW)
-
-        button = Button(master, text='First', width=textsize)
-        button.grid(row=7, column=contentcolumn)
-        self.pagebuttons.append(button)
-
-        button = Button(master, text='Prev', width=textsize)
-        button.grid(row=9, column=contentcolumn)
-        self.pagebuttons.append(button)
-
-        button = Button(master, text='Next', width=textsize)
-        button.grid(row=11, column=contentcolumn)
-        self.pagebuttons.append(button)
-
-        button = Button(master, text='Last', width=textsize)
-        button.grid(row=13, column=contentcolumn)
-        self.pagebuttons.append(button)
-
-        separator = ttk.Separator(master)
-        separator.grid(row=15, column=0, columnspan=5, sticky=EW)
-        
-        master.columnconfigure(0, minsize=5)
-        master.columnconfigure(2, minsize=5)
-        for num in padrows:
-            master.rowconfigure(num, minsize=15)
-    
-    def _populateEntryEditing(self):
-        if self.editEntry == None:
-            buttonstate = DISABLED
-            self.pageEditTitle.config(text='No Entry Selected')
-            self.pageEditEntryDetails.config(text='...')
-            self._clearEditPane(DISABLED)
-            self.pageEditDetails.config(text='...')
-        else:
-            buttonstate = ACTIVE
-            currentpage = self.editEntry.editPage
-            numpages = len(self.editEntry.pages)
-            self.pageEditTitle.config(text='Editing Entry: ' + self.editEntry.getPath())
-            self.pageEditEntryDetails.config(text='Page: ' + str(currentpage) + '/' + str(numpages))
-            if currentpage >= numpages:
-                self._clearEditPane(DISABLED)
-                self.pageEditDetails.config(text='...')
-        
-        for button in self.pagebuttons:
-            button.config(state=buttonstate)
-
-    def _clearEditPane(self, nextstate):
-        self.pageEditPane.config(state=NORMAL)
-        self.pageEditPane.delete(1.0,END)
-        self.pageEditPane.config(state=nextstate)
-
-    def _cacheOpenState(self, treenode, openstate):
-        children = self.tree.tree.get_children(treenode)
-        for child in children:
-            self._cacheOpenState(child, openstate)
-            item = self.tree.tree.item(child)
-            if item['open']:
-                openstate.append(item['values'][0])
-
-    def _applyOpenState(self, treenode, openstate):
-        children = self.tree.tree.get_children(treenode)
-        for child in children:
-            key = self.tree._getItemValuesByTreeId(child)[0]
-            if key in openstate:
-                self.tree.tree.item(child, open=YES)
-                openstate.remove(key)
-            self._applyOpenState(child, openstate)
-
     def _refreshViews(self):
-        self._populateTreeRoot()
-        self._populateEntryEditing()
-
-    def _populateTreeRoot(self):
-        # Cache the whole tree state to preserve open states
-        openstate = []
-        self._cacheOpenState(None,openstate)
-        self.tree.tree.delete(*self.tree.tree.get_children())
-        self._populateTree(self.content, '')
-        self.tree.tree.item(self.tree.tree.get_children(), open=YES)        
-        self._applyOpenState(None,openstate)
-    
-    def _setItemOpen(self, id, openstate):
-        self.tree.tree.item(id, open=openstate)
+        self.tree._populateTreeRoot()
+        self.editpanel._populateEntryEditing()
 
     def _getItemPathByString(self, string):
         return self.content.findNode(string).getPath()
-
-    def _populateTree(self, node, tree):
-        nodetype = 'group'
-        if node.parent == None:
-            nodetype = 'root'
-        treenode = self.tree.tree.insert(tree, END, text=node.id, values=[node.getPath(), '', '', nodetype])
-        # Show Entries
-        for entry in node.entries:
-            self.tree.tree.insert(treenode, END, text=entry.id, values=[entry.getPath(), entry.entrytype.value, len(entry.pages), 'entry'])
-        # Show children
-        for child in node.children:
-            self._populateTree(child, treenode)
-        # Show empty if there are no children or entries in a group
-        if len(node.entries) < 1 and len(node.children) < 1:
-            self.tree.tree.insert(treenode, 0, text='[Empty]', values=[node.getPath(), '', '', 'empty'])
 
 root = Tk()
 app = DialogueEditor(root)

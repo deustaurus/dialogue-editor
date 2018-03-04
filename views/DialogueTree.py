@@ -164,7 +164,7 @@ class DialogueTree:
             val = self._getItemValuesByTreeId(iid)
             if val[3] != 'entry':
                 return
-            self.editEntry = self.main.content.findEntry(val[0])
+            self.main.editEntry = self.main.content.findEntry(val[0])
             self.main._refreshViews()
     
     def _getItemValuesByTreeId(self, id):
@@ -182,3 +182,47 @@ class DialogueTree:
             if childres:
                 return childres
         return None
+
+    def _cacheOpenState(self, treenode, openstate):
+        children = self.tree.get_children(treenode)
+        for child in children:
+            self._cacheOpenState(child, openstate)
+            item = self.tree.item(child)
+            if item['open']:
+                openstate.append(item['values'][0])
+
+    def _applyOpenState(self, treenode, openstate):
+        children = self.tree.get_children(treenode)
+        for child in children:
+            key = self._getItemValuesByTreeId(child)[0]
+            if key in openstate:
+                self.tree.item(child, open=YES)
+                openstate.remove(key)
+            self._applyOpenState(child, openstate)
+
+    def _populateTreeRoot(self):
+        # Cache the whole tree state to preserve open states
+        openstate = []
+        self._cacheOpenState(None,openstate)
+        self.tree.delete(*self.tree.get_children())
+        self._populateTree(self.main.content, '')
+        self.tree.item(self.tree.get_children(), open=YES)        
+        self._applyOpenState(None,openstate)
+    
+    def _setItemOpen(self, id, openstate):
+        self.tree.item(id, open=openstate)
+
+    def _populateTree(self, node, tree):
+        nodetype = 'group'
+        if node.parent == None:
+            nodetype = 'root'
+        treenode = self.tree.insert(tree, END, text=node.id, values=[node.getPath(), '', '', nodetype])
+        # Show Entries
+        for entry in node.entries:
+            self.tree.insert(treenode, END, text=entry.id, values=[entry.getPath(), entry.entrytype.value, len(entry.pages), 'entry'])
+        # Show children
+        for child in node.children:
+            self._populateTree(child, treenode)
+        # Show empty if there are no children or entries in a group
+        if len(node.entries) < 1 and len(node.children) < 1:
+            self.tree.insert(treenode, 0, text='[Empty]', values=[node.getPath(), '', '', 'empty'])
