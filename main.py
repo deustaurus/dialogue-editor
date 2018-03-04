@@ -51,13 +51,18 @@ class DialogueEditor:
         treeFrame = Frame(master)
         treeFrame.grid(row=0, column=0, sticky=NSEW)
 
-        entryFrame = Frame(master, width=300, background="#ff0000")
+        entryFrame = Frame(master)
         entryFrame.grid(row=0, column=1, sticky=NSEW)
+
+        entryButtonFrame = Frame(master, width=50)
+        entryButtonFrame.grid(row=0, column=2, sticky=NSEW)
 
         master.rowconfigure(0, weight=1)
         master.columnconfigure(1, weight=1)
 
         self._createTree(treeFrame)
+        self._createPageEdit(entryFrame)
+        self._createPageButtons(entryButtonFrame)
 
     def test(self):
         print("Test")
@@ -238,7 +243,71 @@ class DialogueEditor:
         self.tree.bind("<ButtonPress-1>", self._leftClickTree)
         self.tree.bind("<ButtonRelease-1>", self._leftClickTreeRelease, add='+')
         self.tree.bind("<B1-Motion>", self._leftClickTreeMove, add='+')
+        self.tree.bind('<Double-1>', self._doubleClickTree)
         self._populateTreeRoot()
+    
+    def _createPageEdit(self, master):
+        contentcolumn = 2
+        self.separatorLeft = ttk.Separator(master, orient=VERTICAL)
+        self.separatorLeft.grid(row=0, column=0, rowspan=7, sticky=NS)
+        self.separatorRight = ttk.Separator(master, orient=VERTICAL)
+        self.separatorRight.grid(row=0, column=4, rowspan=7, sticky=NS)
+
+        self.pageEditTitle = Label(master, text='Title', anchor=W)
+        self.pageEditTitle.grid(row=1, column=contentcolumn, sticky=EW)
+        self.pageEditEntryDetails = Label(master, text='Details', anchor=W)
+        self.pageEditEntryDetails.grid(row=2, column=contentcolumn, sticky=EW)
+
+        pageEditFrame = Frame(master)
+        pageEditFrame.grid(row=4, column=contentcolumn, sticky=NSEW)
+        self.pageEditPane = Text(pageEditFrame)
+        self.pageEditPane.insert(END, 'Lorem ipsum dolor est')
+        self.pageEditPane.grid(row=0, column=0, sticky=NSEW)        
+        yscroll = ttk.Scrollbar(pageEditFrame, orient=VERTICAL, command=self.pageEditPane.yview)
+        self.pageEditPane.configure(yscrollcommand=yscroll.set)
+        yscroll.grid(row=0, column=1, sticky=NS)
+        pageEditFrame.columnconfigure(0, weight=1)
+        pageEditFrame.rowconfigure(0, weight=1)
+
+        self.pageEditDetails = Label(master, text='Page 1 Details', anchor=W)
+        self.pageEditDetails.grid(row=5, column=contentcolumn, sticky=EW)
+
+        master.rowconfigure(0, minsize=15) # Padding
+        master.rowconfigure(4, weight=1)
+        master.rowconfigure(6, minsize=15) # Padding
+        master.columnconfigure(1, minsize=15) # Padding
+        master.columnconfigure(contentcolumn, weight=1)
+        master.columnconfigure(3, minsize=15) # Padding
+    
+    def _createPageButtons(self, master):
+        # TODO These commands
+        contentcolumn = 1
+        textsize = 5
+        padrows = [0,2,4,6,8,10,12,14]
+        self.pageAddButton = Button(master, text='Add', width=textsize)
+        self.pageAddButton.grid(row=1, column=contentcolumn)
+        self.pageRemoveButton = Button(master, text='Rem', width=textsize)
+        self.pageRemoveButton.grid(row=3, column=contentcolumn)
+        
+        separator = ttk.Separator(master)
+        separator.grid(row=5, column=0, columnspan=5, sticky=EW)
+
+        self.pageFirstButton = Button(master, text='First', width=textsize)
+        self.pageFirstButton.grid(row=7, column=contentcolumn)
+        self.pagePrevButton = Button(master, text='Prev', width=textsize)
+        self.pagePrevButton.grid(row=9, column=contentcolumn)
+        self.pageNextButton = Button(master, text='Next', width=textsize)
+        self.pageNextButton.grid(row=11, column=contentcolumn)
+        self.pageLastButton = Button(master, text='Last', width=textsize)
+        self.pageLastButton.grid(row=13, column=contentcolumn)
+
+        separator = ttk.Separator(master)
+        separator.grid(row=15, column=0, columnspan=5, sticky=EW)
+        
+        master.columnconfigure(0, minsize=5)
+        master.columnconfigure(2, minsize=5)
+        for num in padrows:
+            master.rowconfigure(num, minsize=15)
 
     def _cacheOpenState(self, treenode, openstate):
         children = self.tree.get_children(treenode)
@@ -251,7 +320,7 @@ class DialogueEditor:
     def _applyOpenState(self, treenode, openstate):
         children = self.tree.get_children(treenode)
         for child in children:
-            key = self._getItemValues(child)[0]
+            key = self._getItemValuesByTreeId(child)[0]
             if key in openstate:
                 self.tree.item(child, open=YES)
                 openstate.remove(key)
@@ -260,7 +329,7 @@ class DialogueEditor:
     def _findTreeIndexByPath(self, path, treenode=None):
         children = self.tree.get_children(treenode)
         for child in children:
-            if self._getItemValues(child)[0] == path:
+            if self._getItemValuesByTreeId(child)[0] == path:
                 return child
             childres = self._findTreeIndexByPath(path, child)
             if childres:
@@ -279,11 +348,11 @@ class DialogueEditor:
     def _setItemOpen(self, id, openstate):
         self.tree.item(id, open=openstate)
     
-    def _getItemValues(self, id):
+    def _getItemValuesByTreeId(self, id):
         return self.tree.item(id)['values']
 
     def _getItemPathByTreeId(self, id):
-        return self._getItemPathByString(self._getItemValues(id)[0])
+        return self._getItemPathByString(self._getItemValuesByTreeId(id)[0])
 
     def _getItemPathByString(self, string):
         return self.content.findNode(string).getPath()
@@ -317,7 +386,7 @@ class DialogueEditor:
                 self.popupmenu.entryconfig(6, state=ACTIVE) # Delete
                 # Get information
                 self.tree.selection_set(iid)
-                self.treeSelection = self._getItemValues(iid)
+                self.treeSelection = self._getItemValuesByTreeId(iid)
                 seltype = self.treeSelection[3]
                 # Check information
                 if seltype == 'root':
@@ -341,12 +410,12 @@ class DialogueEditor:
     def _leftClickTree(self, event):
         iid = self.tree.identify_row(event.y)
         if iid:
-            val = self._getItemValues(iid)
+            val = self._getItemValuesByTreeId(iid)
             if val[3] == 'root' or val[3] == 'empty':
                 # We don't allow dragging of the root, of course!
                 return
             self.dragstate = DragState.DRAG
-            self.treeSelection = self._getItemValues(iid)
+            self.treeSelection = self._getItemValuesByTreeId(iid)
 
     def _leftClickTreeRelease(self, event):
         if self.dragstate != DragState.NONE:
@@ -407,6 +476,15 @@ class DialogueEditor:
             if iid:
                 self.dragstate = DragState.SUCCESS
                 self.tree.selection_set(iid)
+    
+    def _doubleClickTree(self, event):
+        iid = self.tree.identify_row(event.y)
+        if iid:
+            # We really only respond to double clicking on entries
+            val = self._getItemValuesByTreeId(iid)
+            if val[3] != 'entry':
+                return
+            print('Double Clicked on : ' + val[0])
 
 root = Tk()
 app = DialogueEditor(root)

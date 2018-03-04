@@ -5,6 +5,11 @@ class EntryType(Enum):
     NONE = 'Default'
     DIARY = 'Diary'
 
+class DialoguePage:
+    def __init__(self, parent):
+        self.parent = parent
+        self.content = ''
+
 class DialogueEntry:
     def __init__(self, id, entrytype, parent):
         self.parent = parent
