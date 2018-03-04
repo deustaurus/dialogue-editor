@@ -16,6 +16,7 @@ class DialogueEntry:
         self.id = id
         self.entrytype = entrytype
         self.pages = []
+        self.editPage = 0
     
     def getPath(self):
         return self.parent.getPath() + '.' + self.id
