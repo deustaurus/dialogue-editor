@@ -1,4 +1,5 @@
 from enum import Enum
+from natsort import natsort_keygen, ns
 
 class EntryType(Enum):
     NONE = 'Default'
@@ -34,10 +35,12 @@ class DialogueNode:
         return result
     
     def sortNodes(self):
-        self.children.sort(key=lambda x: x.id)
+        key = natsort_keygen(key=lambda x: x.id, alg=ns.IGNORECASE)
+        self.children.sort(key=key)
 
     def sortEntries(self):
-        self.entries.sort(key=lambda x: x.id)
+        key = natsort_keygen(key=lambda x: x.id, alg=ns.IGNORECASE)
+        self.entries.sort(key=key)
 
     def getPath(self):
         # No path if we're the root
