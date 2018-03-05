@@ -14,7 +14,7 @@ Python 3.6
 
 ### Installing
 
-TODO
+* TODO
 
 ## Authors
 

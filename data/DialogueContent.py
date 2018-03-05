@@ -2,6 +2,8 @@ import re
 import string
 from data.DialogueData import DialogueGroup, EntryType, DialogueBase
 
+# TODO undo tree?
+
 class DialogueContent:
     def __init__(self):
         # Editing Content
@@ -12,6 +14,7 @@ class DialogueContent:
         # Dummy Content
         self.data = DialogueGroup('Content')
         common = self.data.addNode('Common10')
+        common.addNode('Common10')
         common.addEntry('Chum')
         common.addEntry('Crum_1')
         common.addEntry('Crum_10')

@@ -3,13 +3,8 @@ from views.DialogueTree import DialogueTree
 from views.EntryPanel import EntryPanel
 from tkinter import Menu, Tk
 
-# TODO Text input validation
-# TODO make buttons for the right click menu stuff
-# TODO some nice bg colors and stuff for list
-# TODO bg color for currently edited entry and parents
 # TODO load from xml
 # TODO save to xml
-# TODO undo tree?
 
 class DialogueEditor:
     def __init__(self, master):

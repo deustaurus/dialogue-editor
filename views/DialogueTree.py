@@ -6,6 +6,11 @@ from data.DialogueContent import DialogueContent
 from views.SimpleDialog import Dialog
 
 # TODO prevent dragging when the name is identical
+# TODO some nice bg colors and stuff for list
+# TODO bg color for currently edited entry and parents
+# TODO Text input validation
+# TODO make buttons for the right click menu stuff
+# TODO better path checking for sub-checking (ie, Common1 -> Common10 is colliding)
 
 class DragState(Enum):
     NONE = 0
@@ -19,8 +24,7 @@ class DialogueTree:
 
         self.dragstate = DragState.NONE
         self.treeselection = None
-        self.nodemodify = None
-        self.entrymodify = None
+        self.verifynode = None
 
         treeFrame = Frame(master)
         treeFrame.grid(row=0, column=0, sticky=NSEW)
@@ -79,37 +83,26 @@ class DialogueTree:
         return newname
 
     def _validateName(self, name):
+        # TODO This
         return 1
 
-    def _validateNewGroupName(self, name):
-        for node in self.nodemodify.children:
-            if node.id == name:
-                return 0
-        return self._validateName(name)
-
-    def _validateRenameGroup(self, name):
-        for node in self.nodemodify.parent.children:
+    def _validateGroup(self, name):
+        for node in self.verifynode.children:
             if node.id == name:
                 return 0
         return self._validateName(name)
     
-    def _validateNewEntryName(self, name):
-        for entry in self.nodemodify.entries:
-            if entry.id == name:
-                return 0
-        return self._validateName(name)
-    
-    def _validateRenameEntry(self, name):
-        for entry in self.entrymodify.parent.entries:
+    def _validateEntry(self, name):
+        for entry in self.verifynode.entries:
             if entry.id == name:
                 return 0
         return self._validateName(name)
 
     def _actionNewGroup(self):
-        self.nodemodify = self.content.data.findNode(self.treeSelection[0])
-        popup = Dialog(self.master, "New Group", validate=self._validateNewGroupName)
+        self.verifynode = self.content.data.findNode(self.treeselection[0])
+        popup = Dialog(self.master, "New Group", validate=self._validateGroup)
         if popup.result:
-            result = self.nodemodify.addNode(popup.result)
+            result = self.verifynode.addNode(popup.result)
             self.content.contentMutated()
             iid = self._findTreeIndexByPath(result.parent.getPath())
             if iid:
@@ -119,10 +112,10 @@ class DialogueTree:
                     self.tree.selection_set(iid)
     
     def _actionNewEntry(self):
-        self.nodemodify = self.content.data.findNode(self.treeSelection[0])
-        popup = Dialog(self.master, "New Entry", validate=self._validateNewEntryName)
+        self.verifynode = self.content.data.findNode(self.treeselection[0])
+        popup = Dialog(self.master, "New Entry", validate=self._validateEntry)
         if popup.result:
-            entry = self.nodemodify.addEntry(popup.result)
+            entry = self.verifynode.addEntry(popup.result)
             self.content.editEntry = entry
             self.content.contentMutated()
             iid = self._findTreeIndexByPath(entry.parent.getPath())
@@ -133,34 +126,36 @@ class DialogueTree:
                     self.tree.selection_set(iid)
     
     def _actionRename(self):
-        renametype = self.treeSelection[3]
+        renametype = self.treeselection[3]
         if renametype == 'group':
-            self.nodemodify = self.content.data.findNode(self.treeSelection[0])
-            popup = Dialog(self.master, 'Rename Group', inittext=self.nodemodify.id, validate=self._validateRenameGroup)
+            node = self.content.data.findNode(self.treeselection[0])
+            self.verifynode = node.parent
+            popup = Dialog(self.master, 'Rename Group', inittext=node.id, validate=self._validateGroup)
             if popup.result:
                 openstate = self.tree.item(self.tree.selection())['open']
-                self.nodemodify.id = popup.result
-                self.nodemodify.parent.sortNodes()
+                node.id = popup.result
+                node.parent.sortNodes()
                 self.content.contentMutated()
-                iid = self._findTreeIndexByPath(self.nodemodify.getPath())
+                iid = self._findTreeIndexByPath(node.getPath())
                 if iid:
                     self.tree.selection_set(iid)
                     self.tree.item(iid, open=openstate)
         elif renametype == 'entry':
-            self.entrymodify = self.content.data.findEntry(self.treeSelection[0])
-            popup = Dialog(self.master, 'Rename Entry', inittext=self.entrymodify.id, validate=self._validateRenameEntry)
+            entry = self.content.data.findEntry(self.treeselection[0])
+            self.verifynode = entry.parent
+            popup = Dialog(self.master, 'Rename Entry', inittext=entry.id, validate=self._validateEntry)
             if popup.result:
-                self.entrymodify.id = popup.result
-                self.entrymodify.parent.sortEntries()
+                entry.id = popup.result
+                entry.parent.sortEntries()
                 self.content.contentMutated()
-                iid = self._findTreeIndexByPath(self.entrymodify.getPath())
+                iid = self._findTreeIndexByPath(entry.getPath())
                 if iid:
                     self.tree.selection_set(iid)
 
     def _actionDelete(self):
-        deletetype = self.treeSelection[3]
+        deletetype = self.treeselection[3]
         if deletetype == 'group':
-            node = self.content.data.findNode(self.treeSelection[0])
+            node = self.content.data.findNode(self.treeselection[0])
             # TODO Warn about how many children we're deleting?
             if messagebox.askyesno(
                 'Delete Node?', 
@@ -169,7 +164,7 @@ class DialogueTree:
             ):
                 node.parent.children.remove(node)
         elif deletetype == 'entry':
-            entry = self.content.data.findEntry(self.treeSelection[0])
+            entry = self.content.data.findEntry(self.treeselection[0])
             # TODO Warn about how many pages we're deleting
             if messagebox.askyesno(
                 'Delete Entry?',
@@ -180,13 +175,15 @@ class DialogueTree:
         self.content.contentMutated()
     
     def _actionDuplicate(self):
-        duplicatetype = self.treeSelection[3]
+        duplicatetype = self.treeselection[3]
         if duplicatetype == 'group':
-            self.nodemodify = self.content.data.findNode(self.treeSelection[0])
-            self.nodemodify.parent.addNode(self._incrementName(self.nodemodify.id, self._validateRenameGroup))
+            node = self.content.data.findNode(self.treeselection[0])
+            self.verifynode = node.parent
+            node.parent.addNode(self._incrementName(node.id, self._validateGroup))
         elif duplicatetype == 'entry':
-            self.entrymodify = self.content.data.findEntry(self.treeSelection[0])
-            self.entrymodify.parent.addEntry(self._incrementName(self.entrymodify.id, self._validateRenameEntry))
+            entry = self.content.data.findEntry(self.treeselection[0])
+            self.verifynode = entry.parent
+            entry.parent.addEntry(self._incrementName(entry.id, self._validateEntry))
         self.content.contentMutated()
 
     def _rightClickTree(self, event):
@@ -203,8 +200,8 @@ class DialogueTree:
                 self.popupmenu.entryconfig(6, state=ACTIVE) # Delete
                 # Get information
                 self.tree.selection_set(iid)
-                self.treeSelection = self._getItemValuesByTreeId(iid)
-                seltype = self.treeSelection[3]
+                self.treeselection = self._getItemValuesByTreeId(iid)
+                seltype = self.treeselection[3]
                 # Check information
                 if seltype == 'root':
                     # Root content can't be deleted, or have entries added
@@ -232,21 +229,21 @@ class DialogueTree:
                 # We don't allow dragging of the root, of course!
                 return
             self.dragstate = DragState.DRAG
-            self.treeSelection = self._getItemValuesByTreeId(iid)
+            self.treeselection = self._getItemValuesByTreeId(iid)
 
     def _leftClickTreeRelease(self, event):
         if self.dragstate != DragState.NONE:
             if self.dragstate == DragState.SUCCESS:
                 newparent = self.content.data.findNode(self._getItemPathByTreeId(self.tree.selection()))
-                movetype = self.treeSelection[3]
+                movetype = self.treeselection[3]
                 if movetype == 'group':
-                    moveitem = self.content.data.findNode(self.treeSelection[0])
+                    moveitem = self.content.data.findNode(self.treeselection[0])
                     moveitem.parent.children.remove(moveitem)
                     moveitem.parent = newparent
                     newparent.children.append(moveitem)
                     newparent.sortNodes()
                 elif movetype == 'entry':
-                    moveitem = self.content.data.findEntry(self.treeSelection[0])
+                    moveitem = self.content.data.findEntry(self.treeselection[0])
                     moveitem.parent.entries.remove(moveitem)
                     moveitem.parent = newparent
                     newparent.entries.append(moveitem)
@@ -256,7 +253,7 @@ class DialogueTree:
                 self.tree.selection_set(self._findTreeIndexByPath(moveitem.getPath()))
             else:
                 # If we didn't succeed, reset the selection back to the start
-                self.tree.selection_set(self._findTreeIndexByPath(self.treeSelection[0]))
+                self.tree.selection_set(self._findTreeIndexByPath(self.treeselection[0]))
             self.dragstate = DragState.NONE
 
     def _leftClickTreeMove(self, event):
@@ -267,23 +264,34 @@ class DialogueTree:
         if iid:
             self.dragstate = DragState.DRAG
             movepath = self._getItemPathByTreeId(iid)
-            currentpath = self.content.getItemPathByString(self.treeSelection[0])
+            self.verifynode = self.content.data.findNode(movepath)
+            currentpath = self.content.getItemPathByString(self.treeselection[0])
             # First check what type of move we're doing
-            movetype = self.treeSelection[3]
+            movetype = self.treeselection[3]
             if movetype == 'group':
-                if self.treeSelection[0] in movepath:                    
+                if self.treeselection[0] in movepath:                    
                     # We can't drag a group inside itself
                     self.tree.selection_set()
                     return
+                node = self.content.data.findNode(self.treeselection[0])
+                # Check for name duplication in parent
+                if not self._validateGroup(node.id):
+                    self.tree.selection_set()
+                    return
                 # Group move
-                parentpath = self.content.data.findNode(self.treeSelection[0]).parent.getPath()
+                parentpath = node.parent.getPath()
             elif movetype == 'entry':
                 if len(movepath) < 1:
                     # Can't drag entries to root
                     self.tree.selection_set()
                     return
+                entry = self.content.data.findEntry(self.treeselection[0])
+                # Check for name duplication in parent
+                if not self._validateEntry(entry.id):
+                    self.tree.selection_set()
+                    return
                 # Entry move
-                parentpath = self.content.data.findEntry(self.treeSelection[0]).parent.getPath()
+                parentpath = entry.parent.getPath()
             
             if parentpath == movepath or movepath == currentpath:
                 self.tree.selection_set()
