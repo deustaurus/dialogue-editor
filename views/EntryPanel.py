@@ -1,12 +1,13 @@
 from tkinter import *
 from tkinter import ttk
+from data.DialogueContent import DialogueContent
 
 # TODO another row to toggle the entry type
 
-class EntryEditPanel:
-    def __init__(self, master, main):
+class EntryPanel:
+    def __init__(self, master, content=DialogueContent):
         self.master = master
-        self.main = main
+        self.content = content
 
         entryFrame = Frame(master)
         entryFrame.grid(row=0, column=1, sticky=NSEW)
@@ -93,7 +94,7 @@ class EntryEditPanel:
             master.rowconfigure(num, minsize=15)
     
     def _populateEntryEditing(self):
-        if self.main.editEntry == None:
+        if self.content.editEntry == None:
             buttonstate = DISABLED
             self.pageEditTitle.config(text='No Entry Selected')
             self.pageEditEntryDetails.config(text='...')
@@ -101,9 +102,9 @@ class EntryEditPanel:
             self.pageEditDetails.config(text='...')
         else:
             buttonstate = ACTIVE
-            currentpage = self.main.editEntry.editPage
-            numpages = len(self.main.editEntry.pages)
-            self.pageEditTitle.config(text='Editing Entry: ' + self.main.editEntry.getPath())
+            currentpage = self.content.editEntry.editPage
+            numpages = len(self.content.editEntry.pages)
+            self.pageEditTitle.config(text='Editing Entry: ' + self.content.editEntry.getPath())
             self.pageEditEntryDetails.config(text='Page: ' + str(currentpage) + '/' + str(numpages))
             if currentpage >= numpages:
                 self._clearEditPane(DISABLED)
