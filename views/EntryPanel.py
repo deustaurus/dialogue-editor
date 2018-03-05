@@ -2,8 +2,6 @@ from tkinter import *
 from tkinter import ttk
 from data.DialogueContent import DialogueContent
 
-# TODO another row to toggle the entry type
-
 class EntryPanel:
     def __init__(self, master, content=DialogueContent):
         self.master = master
@@ -56,6 +54,7 @@ class EntryPanel:
     
     def _createPageButtons(self, master):
         # TODO These commands
+        # TODO another row to toggle the entry type
         contentcolumn = 1
         textsize = 5
         padrows = [0,2,4,6,8,10,12,14]

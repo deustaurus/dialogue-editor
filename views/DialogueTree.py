@@ -5,12 +5,11 @@ from tkinter import ttk, messagebox
 from data.DialogueContent import DialogueContent
 from views.SimpleDialog import Dialog
 
-# TODO prevent dragging when the name is identical
+# TODO Text input validation
+# TODO Text banned names for variables
 # TODO some nice bg colors and stuff for list
 # TODO bg color for currently edited entry and parents
-# TODO Text input validation
 # TODO make buttons for the right click menu stuff
-# TODO better path checking for sub-checking (ie, Common1 -> Common10 is colliding)
 
 class DragState(Enum):
     NONE = 0
@@ -21,6 +20,9 @@ class DialogueTree:
     def __init__(self, master, content=DialogueContent):
         self.master = master
         self.content = content
+
+        self.validchars = 'abcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_'
+        
 
         self.dragstate = DragState.NONE
         self.treeselection = None
@@ -269,11 +271,14 @@ class DialogueTree:
             # First check what type of move we're doing
             movetype = self.treeselection[3]
             if movetype == 'group':
-                if self.treeselection[0] in movepath:                    
-                    # We can't drag a group inside itself
-                    self.tree.selection_set()
-                    return
                 node = self.content.data.findNode(self.treeselection[0])
+                # We can't drag a group inside itself, so welook up the verify node's parents
+                parent = self.verifynode.parent
+                while parent != None:
+                    if parent == node:
+                        self.tree.selection_set()
+                        return
+                    parent = parent.parent
                 # Check for name duplication in parent
                 if not self._validateGroup(node.id):
                     self.tree.selection_set()
