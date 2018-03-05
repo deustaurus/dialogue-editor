@@ -1,13 +1,10 @@
-import os
-import string
-import re
-
-from tkinter import *
-from tkinter import ttk, messagebox
-from data.DialogueData import *
-from views.SimpleDialog import Dialog
+import string, re
 from views.DialogueTree import DialogueTree
 from views.EntryEditPanel import EntryEditPanel
+from views.SimpleDialog import Dialog
+from data.DialogueData import DialogueNode, EntryType
+from tkinter import Menu, messagebox, Tk
+from tkinter.constants import YES
 
 # TODO Text input validation
 # TODO make buttons for the right click menu stuff
@@ -18,7 +15,6 @@ from views.EntryEditPanel import EntryEditPanel
 # TODO undo tree?
 
 class DialogueEditor:
-
     def __init__(self, master):
         self.master = master
 

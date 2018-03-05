@@ -1,11 +1,14 @@
+from enum import Enum
 from tkinter import *
 from tkinter import ttk
-from data.Consts import DragState
-from main import DialogueEditor
+
+class DragState(Enum):
+    NONE = 0
+    DRAG = 1
+    SUCCESS = 2
 
 class DialogueTree:
-
-    def __init__(self, master, main=DialogueEditor):
+    def __init__(self, master, main):
         self.master = master
         self.main = main
 

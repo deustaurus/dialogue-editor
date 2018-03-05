@@ -1,10 +1,10 @@
 from tkinter import *
 from tkinter import ttk
-from main import DialogueEditor
+
+# TODO another row to toggle the entry type
 
 class EntryEditPanel:
-
-    def __init__(self, master, main=DialogueEditor):
+    def __init__(self, master, main):
         self.master = master
         self.main = main
 

@@ -1,7 +1,6 @@
 from tkinter import *
 
 class Dialog(Toplevel):
-
     def __init__( self,  parent, title=None, label='Name:', inittext='', validate=None ):
         Toplevel.__init__(self, parent)
         self.transient(parent)
