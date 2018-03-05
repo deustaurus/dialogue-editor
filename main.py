@@ -24,7 +24,7 @@ class DialogueEditor:
         self.content = DialogueContent()
         self.content.mutateEvent.append(self.refreshViews)
         self.treeview = DialogueTree(master,self.content)
-        self.editpanel = EntryPanel(master,self.content)
+        self.entrypanel = EntryPanel(master,self.content)
 
         self.refreshViews()
 
@@ -47,8 +47,7 @@ class DialogueEditor:
 
     def refreshViews(self):
         self.treeview.refreshView()
-        self.editpanel._populateEntryEditing()
-
+        self.entrypanel.refreshView()
 
 root = Tk()
 app = DialogueEditor(root)

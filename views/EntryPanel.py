@@ -18,6 +18,9 @@ class EntryPanel:
         self._createPageEdit(entryFrame)
         self._createPageButtons(entryButtonFrame)
 
+    def refreshView(self):
+        self._populateEntryEditing()
+
     def _createPageEdit(self, master):
         contentcolumn = 2
         self.separatorLeft = ttk.Separator(master, orient=VERTICAL)

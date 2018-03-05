@@ -30,7 +30,7 @@ class DialogueContent:
         bome.addEntry('Crunt')
         bome.addNode('Crome')
 
-    def _dispatchMutate(self):
+    def contentMutated(self):
         for func in self.mutateEvent:
             func()
 

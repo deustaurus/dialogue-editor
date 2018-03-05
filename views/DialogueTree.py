@@ -1,3 +1,4 @@
+import string
 from enum import Enum
 from tkinter import *
 from tkinter import ttk, messagebox
@@ -57,13 +58,13 @@ class DialogueTree:
     def _createRightClickMenu(self, master):
         self.popupmenu = Menu(master, tearoff=0)
 
-        self.popupmenu.add_command(label='New Group', command=self.newGroupAction)
-        self.popupmenu.add_command(label='New Entry', command=self.newEntryAction)
-        self.popupmenu.add_command(label='Duplicate Id', command=self.duplicateIdAction)
+        self.popupmenu.add_command(label='New Group', command=self._actionNewGroup)
+        self.popupmenu.add_command(label='New Entry', command=self._actionNewEntry)
+        self.popupmenu.add_command(label='Duplicate Id', command=self._actionDuplicate)
         self.popupmenu.add_separator()
-        self.popupmenu.add_command(label='Rename', command=self.renameObjectAction)
+        self.popupmenu.add_command(label='Rename', command=self._actionRename)
         self.popupmenu.add_separator()
-        self.popupmenu.add_command(label='Delete', command=self.deleteObjectAction)
+        self.popupmenu.add_command(label='Delete', command=self._actionDelete)
 
     def _incrementName(self, name, validation):
         num = 0
@@ -104,12 +105,12 @@ class DialogueTree:
                 return 0
         return self._validateName(name)
 
-    def newGroupAction(self):
+    def _actionNewGroup(self):
         self.nodemodify = self.content.data.findNode(self.treeSelection[0])
         popup = Dialog(self.master, "New Group", validate=self._validateNewGroupName)
         if popup.result:
             result = self.nodemodify.addNode(popup.result)
-            self.content._dispatchMutate() # TODO Fix this
+            self.content.contentMutated()
             iid = self._findTreeIndexByPath(result.parent.getPath())
             if iid:
                 self.tree.item(iid, open=YES)
@@ -117,13 +118,13 @@ class DialogueTree:
                 if iid:
                     self.tree.selection_set(iid)
     
-    def newEntryAction(self):
+    def _actionNewEntry(self):
         self.nodemodify = self.content.data.findNode(self.treeSelection[0])
         popup = Dialog(self.master, "New Entry", validate=self._validateNewEntryName)
         if popup.result:
             entry = self.nodemodify.addEntry(popup.result)
             self.content.editEntry = entry
-            self.content._dispatchMutate() # TODO Fix this
+            self.content.contentMutated()
             iid = self._findTreeIndexByPath(entry.parent.getPath())
             if iid:
                 self.tree.item(iid, open=YES)
@@ -131,7 +132,7 @@ class DialogueTree:
                 if iid:
                     self.tree.selection_set(iid)
     
-    def renameObjectAction(self):
+    def _actionRename(self):
         renametype = self.treeSelection[3]
         if renametype == 'group':
             self.nodemodify = self.content.data.findNode(self.treeSelection[0])
@@ -140,7 +141,7 @@ class DialogueTree:
                 openstate = self.tree.item(self.tree.selection())['open']
                 self.nodemodify.id = popup.result
                 self.nodemodify.parent.sortNodes()
-                self.content._dispatchMutate() # TODO Fix this
+                self.content.contentMutated()
                 iid = self._findTreeIndexByPath(self.nodemodify.getPath())
                 if iid:
                     self.tree.selection_set(iid)
@@ -151,12 +152,12 @@ class DialogueTree:
             if popup.result:
                 self.entrymodify.id = popup.result
                 self.entrymodify.parent.sortEntries()
-                self.content._dispatchMutate() # TODO Fix this
+                self.content.contentMutated()
                 iid = self._findTreeIndexByPath(self.entrymodify.getPath())
                 if iid:
                     self.tree.selection_set(iid)
 
-    def deleteObjectAction(self):
+    def _actionDelete(self):
         deletetype = self.treeSelection[3]
         if deletetype == 'group':
             node = self.content.data.findNode(self.treeSelection[0])
@@ -176,9 +177,9 @@ class DialogueTree:
                 default=messagebox.NO
             ):
                 entry.parent.entries.remove(entry)
-        self.content._dispatchMutate() # TODO Fix thi
+        self.content.contentMutated()
     
-    def duplicateIdAction(self):
+    def _actionDuplicate(self):
         duplicatetype = self.treeSelection[3]
         if duplicatetype == 'group':
             self.nodemodify = self.content.data.findNode(self.treeSelection[0])
@@ -186,7 +187,7 @@ class DialogueTree:
         elif duplicatetype == 'entry':
             self.entrymodify = self.content.data.findEntry(self.treeSelection[0])
             self.entrymodify.parent.addEntry(self._incrementName(self.entrymodify.id, self._validateRenameEntry))
-        self.content._dispatchMutate() # TODO Fix this
+        self.content.contentMutated()
 
     def _rightClickTree(self, event):
         # Clear any drag state
@@ -250,8 +251,7 @@ class DialogueTree:
                     moveitem.parent = newparent
                     newparent.entries.append(moveitem)
                     newparent.sortEntries()
-                # TODO Handle this better
-                self.content._dispatchMutate()
+                self.content.contentMutated()
                 self.tree.item(self._findTreeIndexByPath(newparent.getPath()), open=YES)
                 self.tree.selection_set(self._findTreeIndexByPath(moveitem.getPath()))
             else:
@@ -302,8 +302,7 @@ class DialogueTree:
             if val[3] != 'entry':
                 return
             self.content.editEntry = self.content.data.findEntry(val[0])
-            # TODO handle this better
-            self.content._dispatchMutate()
+            self.content.contentMutated()
     
     def _getItemValuesByTreeId(self, id):
         return self.tree.item(id)['values']
