@@ -16,6 +16,9 @@ class EntryPanel:
         self.master = master
         self.content = content
 
+        self.WRAP_WIDTH = 37 # From the game
+        self.WRAP_HEIGHT = 7 # From the game
+
         self.entrystate = EntryState.INVALID
         entryFrame = Frame(master)
         entryFrame.grid(row=0, column=1, sticky=NSEW)
@@ -43,9 +46,9 @@ class EntryPanel:
 
         pageEditFrame = Frame(master)
         pageEditFrame.grid(row=4, column=contentcolumn, sticky=NSEW)
-        self.pageEditPane = TextModified(pageEditFrame, wrap=WORD)
+        self.pageEditPane = TextModified(pageEditFrame, wrap=WORD, width=self.WRAP_WIDTH, height=self.WRAP_HEIGHT)
         self.pageEditPane.insert(END, 'Lorem ipsum dolor est')
-        self.pageEditPane.grid(row=0, column=0, sticky=NSEW)
+        self.pageEditPane.grid(row=0, column=0, sticky=NW)
         self.pageEditPane.bind('<<TextModified>>', self._pageModified)
         yscroll = ttk.Scrollbar(pageEditFrame, orient=VERTICAL, command=self.pageEditPane.yview)
         self.pageEditPane.configure(yscrollcommand=yscroll.set)
