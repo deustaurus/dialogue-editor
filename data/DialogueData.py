@@ -1,6 +1,8 @@
 from enum import Enum
 from natsort import natsort_keygen, ns
 
+# TODO add region
+
 class EntryType(Enum):
     NONE = 'Default'
     DIARY = 'Diary'
@@ -22,8 +24,10 @@ class DialogueEntry:
         return self.parent.getPath() + '.' + self.id
     
     def addPage(self):
-        self.pages.append(DialoguePage(self))
+        page = DialoguePage(self)
+        self.pages.append(page)
         self.editPage = len(self.pages) - 1
+        return page
     
     def currentPage(self):
         if len(self.pages) < 1:
@@ -37,6 +41,20 @@ class DialogueGroup:
         self.children = []
         self.entries = []
     
+    def addEntryPath(self, path):
+        split = path.split('.')
+        entryid = split.pop()
+        node = self
+        while len(split) > 0:
+            node = self._findOrCreateNode(node, split.pop(0))
+        return node.addEntry(entryid)
+
+    def _findOrCreateNode(self, node, id):
+        for child in node.children:
+            if child.id == id:
+                return child
+        return node.addNode(id)
+
     def addNode(self, id):
         node = DialogueGroup(id, self)
         self.children.append(node)

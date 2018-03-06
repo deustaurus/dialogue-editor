@@ -43,7 +43,7 @@ class EntryPanel:
 
         pageEditFrame = Frame(master)
         pageEditFrame.grid(row=4, column=contentcolumn, sticky=NSEW)
-        self.pageEditPane = TextModified(pageEditFrame)
+        self.pageEditPane = TextModified(pageEditFrame, wrap=WORD)
         self.pageEditPane.insert(END, 'Lorem ipsum dolor est')
         self.pageEditPane.grid(row=0, column=0, sticky=NSEW)
         self.pageEditPane.bind('<<TextModified>>', self._pageModified)

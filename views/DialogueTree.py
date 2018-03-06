@@ -26,7 +26,7 @@ class DialogueTree:
 
         treeFrame = Frame(master)
         treeFrame.grid(row=0, column=0, sticky=NSEW)
-
+    
         self._createTree(treeFrame)
         self._createRightClickMenu(master)
 
@@ -41,6 +41,7 @@ class DialogueTree:
         self.tree.heading('#0', text='Dialogue Tree', anchor=W)
         self.tree.heading('type', text='Type', anchor=W)
         self.tree.heading('pages', text='Pages', anchor=W)
+        self.tree.column('#0', stretch=0, width=300)
         self.tree.column('type', stretch=0, width=70)
         self.tree.column('pages', stretch=0, width=50)
 
