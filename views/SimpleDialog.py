@@ -1,10 +1,14 @@
 from tkinter import *
+from data.Consts import ValidateResult
 
 class Dialog(Toplevel):
     def __init__( self,  parent, title=None, label='Name:', inittext='', validate=None ):
         Toplevel.__init__(self, parent)
         self.transient(parent)
         self.validationfunc = validate
+        
+        self.validchars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_'
+        self.digitchars = '0123456789'
 
         if title:
             self.title(title)
@@ -18,6 +22,8 @@ class Dialog(Toplevel):
         body.pack(padx=5, pady=5)
 
         self.buttonbox()
+
+        self.updateValidation('')
 
         self.grab_set()
 
@@ -36,11 +42,25 @@ class Dialog(Toplevel):
     #
     # construction hooks
 
+    def entrychanged(self,sv):
+        self.updateValidation(sv.get())
+
     def body(self, master, label, init):
         Label(master, text=label).grid(row=0)
-        self.e1 = Entry(master)
+
+        sv = StringVar()
+        sv.trace('w', lambda name, index, mode, sv=sv: self.entrychanged(sv))
+        vcmd = (self.register(self.inputvalidate),
+            '%d', '%i', '%P', '%s', '%S', '%v', '%V', '%W'
+        )
+        self.e1 = Entry(master, validate='key', validatecommand=vcmd, width=50, textvariable=sv)
         self.e1.insert(END, init)
         self.e1.grid(row=0, column=1)
+
+        Label(master, text='Status:').grid(row=1, column=0)
+        self.detailsLabel = Label(master, text='')
+        self.detailsLabel.grid(row=1, column=1, sticky=W)
+        
         return self.e1 # initial focus
 
     def buttonbox(self):
@@ -49,8 +69,8 @@ class Dialog(Toplevel):
 
         box = Frame(self)
 
-        w = Button(box, text="OK", width=10, command=self.ok, default=ACTIVE)
-        w.pack(side=LEFT, padx=5, pady=5)
+        self.okbutton = Button(box, text="OK", width=10, command=self.ok, state=DISABLED)
+        self.okbutton.pack(side=LEFT, padx=5, pady=5)
         w = Button(box, text="Cancel", width=10, command=self.cancel)
         w.pack(side=LEFT, padx=5, pady=5)
 
@@ -64,7 +84,7 @@ class Dialog(Toplevel):
 
     def ok(self, event=None):
 
-        if not self.validate():
+        if self.validate(self.e1.get()) is not ValidateResult.SUCCESS:
             self.initial_focus.focus_set() # put focus back
             return
 
@@ -82,11 +102,41 @@ class Dialog(Toplevel):
 
     #
     # command hooks
+    def inputvalidate(
+        self, 
+        action, 
+        index, 
+        value_if_allowed, 
+        prior_value, 
+        text, 
+        validaton_type, 
+        trigger_type, 
+        widget_name
+    ):
+        if text not in self.validchars:
+            return False
+        if int(index) == 0 and text in self.digitchars:
+            return False
+        return True
+    
+    def updateValidation(self, name):
+        self.okbutton.config(state=DISABLED)        
+        validresult = self.validate(name)
+        if validresult == ValidateResult.LENGTH:
+            self.detailsLabel.config(text='Enter Name')
+        elif validresult == ValidateResult.NAME_CONFLICT:
+            self.detailsLabel.config(text='Name Conflict')
+        elif validresult == ValidateResult.RESERVED_NAME:
+            self.detailsLabel.config(text='Reserved Name')
+        else:
+            self.okbutton.config(state=ACTIVE)
+            self.detailsLabel.config(text='Valid Name')
 
-    def validate(self):
+
+    def validate(self, name):
         if self.validationfunc == None:
-            return 1
-        return self.validationfunc(self.e1.get())
+            return ValidateResult.SUCCESS
+        return self.validationfunc(name)
 
     def apply(self):
         self.result = self.e1.get()

@@ -4,9 +4,8 @@ from tkinter import *
 from tkinter import ttk, messagebox
 from data.DialogueContent import DialogueContent
 from views.SimpleDialog import Dialog
+from data.Consts import nameblacklistcsharp, ValidateResult
 
-# TODO Text input validation
-# TODO Text banned names for variables
 # TODO some nice bg colors and stuff for list
 # TODO bg color for currently edited entry and parents
 # TODO make buttons for the right click menu stuff
@@ -20,9 +19,6 @@ class DialogueTree:
     def __init__(self, master, content=DialogueContent):
         self.master = master
         self.content = content
-
-        self.validchars = 'abcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_'
-        
 
         self.dragstate = DragState.NONE
         self.treeselection = None
@@ -85,19 +81,22 @@ class DialogueTree:
         return newname
 
     def _validateName(self, name):
-        # TODO This
-        return 1
+        if len(name) < 1:
+            return ValidateResult.LENGTH
+        if name in nameblacklistcsharp:
+            return ValidateResult.RESERVED_NAME
+        return ValidateResult.SUCCESS
 
     def _validateGroup(self, name):
         for node in self.verifynode.children:
             if node.id == name:
-                return 0
+                return ValidateResult.NAME_CONFLICT
         return self._validateName(name)
     
     def _validateEntry(self, name):
         for entry in self.verifynode.entries:
             if entry.id == name:
-                return 0
+                return ValidateResult.NAME_CONFLICT
         return self._validateName(name)
 
     def _actionNewGroup(self):
@@ -280,7 +279,7 @@ class DialogueTree:
                         return
                     parent = parent.parent
                 # Check for name duplication in parent
-                if not self._validateGroup(node.id):
+                if self._validateGroup(node.id) is not ValidateResult.SUCCESS:
                     self.tree.selection_set()
                     return
                 # Group move
@@ -292,7 +291,7 @@ class DialogueTree:
                     return
                 entry = self.content.data.findEntry(self.treeselection[0])
                 # Check for name duplication in parent
-                if not self._validateEntry(entry.id):
+                if self._validateEntry(entry.id) is not ValidateResult.SUCCESS:
                     self.tree.selection_set()
                     return
                 # Entry move
