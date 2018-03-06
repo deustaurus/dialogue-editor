@@ -1,6 +1,6 @@
 import re
 import string
-from data.DialogueData import DialogueGroup, EntryType, DialogueBase
+from data.DialogueData import DialogueGroup, EntryType
 
 # TODO undo tree?
 

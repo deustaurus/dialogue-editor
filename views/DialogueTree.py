@@ -3,7 +3,7 @@ from enum import Enum
 from tkinter import *
 from tkinter import ttk, messagebox
 from data.DialogueContent import DialogueContent
-from views.SimpleDialog import Dialog
+from widget.SimpleDialog import Dialog
 from data.Consts import nameblacklistcsharp, ValidateResult
 
 # TODO some nice bg colors and stuff for list

@@ -5,32 +5,35 @@ class EntryType(Enum):
     NONE = 'Default'
     DIARY = 'Diary'
 
-class DialogueBase:
-    def __init__(self, id, parent=None):
-        self.id = id
-        self.parent = parent
-    
-    def getPath(self):
-        pass # Override
-
 class DialoguePage:
     def __init__(self, parent):
         self.parent = parent
         self.content = ''
 
-class DialogueEntry(DialogueBase):
+class DialogueEntry:
     def __init__(self, id, entrytype, parent):
-        super(DialogueEntry,self).__init__(id, parent)
+        self.id = id
+        self.parent = parent
         self.entrytype = entrytype
         self.pages = []
         self.editPage = 0
     
     def getPath(self):
         return self.parent.getPath() + '.' + self.id
+    
+    def addPage(self):
+        self.pages.append(DialoguePage(self))
+        self.editPage = len(self.pages) - 1
+    
+    def currentPage(self):
+        if len(self.pages) < 1:
+            return None
+        return self.pages[self.editPage]
 
-class DialogueGroup(DialogueBase):
+class DialogueGroup:
     def __init__(self, id, parent=None):
-        super(DialogueGroup,self).__init__(id, parent)
+        self.id = id
+        self.parent = parent
         self.children = []
         self.entries = []
     
