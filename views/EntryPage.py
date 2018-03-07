@@ -7,6 +7,7 @@ from widget.TextModified import TextModified
 
 _WRAP_WIDTH = 37 # From the game
 _WRAP_HEIGHT = 7 # From the game
+_BUTTON_WIDTH = 5 # Width of buttons
 
 class EntryPage(tkinter.Frame):
     def __init__(self, page, index, master=None, cnf={}, **kw):
@@ -20,14 +21,27 @@ class EntryPage(tkinter.Frame):
         content = 'Lorem Ipsum Dolor Est'
         if page:
             content = page.content
+        
+        self.detaillabel = Label(self)
+        self.detaillabel.grid(row=0, column=0, sticky=W)
 
         self.pageEditPane = TextModified(self, wrap=WORD, width=_WRAP_WIDTH, height=_WRAP_HEIGHT)
         self.pageEditPane.insert(END, content)
-        self.pageEditPane.grid(row=0, column=0, sticky=NW)
+        self.pageEditPane.grid(row=1, column=0, sticky=NW)
         self.pageEditPane.bind('<<TextModified>>', self._pageModified)
 
-        self.detaillabel = Label(self)
-        self.detaillabel.grid(row=1, column=0, sticky=W)
+        buttonframe = Frame(self, pady=5)
+        buttonframe.grid(row=2, column=0, sticky=NSEW)
+        buttonframe.columnconfigure(1, weight=1)
+
+        self.addButtonleft = Button(buttonframe, text='<+', width=_BUTTON_WIDTH)
+        self.addButtonleft.grid(row=0, column=0, sticky=W)
+
+        self.buttonDelete = Button(buttonframe, text='X', width=_BUTTON_WIDTH)
+        self.buttonDelete.grid(row=0, column=1)
+
+        self.addbuttonright = Button(buttonframe, text='+>', width=_BUTTON_WIDTH)
+        self.addbuttonright.grid(row=0, column=2, sticky=E)
 
         self._updateDetails()
     
