@@ -24,7 +24,7 @@ class EntryPanel:
 
         # Frame for detail readouts
         detailsFrame = Frame(panelFrame)
-        detailsFrame.grid(row=0, column=0, sticky=NSEW)
+        detailsFrame.grid(row=0, column=0, sticky=NSEW, padx=5, pady=5)
 
         # Frame for canvas
         canvasFrame = Frame(panelFrame)
@@ -33,7 +33,7 @@ class EntryPanel:
         canvasFrame.columnconfigure(0, weight=1)
 
         # # Calculate initial width of widgets
-        testpage = EntryPage(None, 0, canvasFrame)
+        testpage = EntryPage(None, 0, None, canvasFrame)
         testpage.grid(row=0, column=0)
         master.update_idletasks()
         self.panelwidgetwidth = testpage.width()
@@ -75,17 +75,21 @@ class EntryPanel:
         self._layoutPages()
 
     def refreshView(self):
-        self._rebuildPage()
-    
-    def _rebuildPage(self):
         if self.lastentry != self.content.editEntry:
-            while len(self.editpages) > 0:
-                self.editpages.pop().destroy()
-            self.lastentry = self.content.editEntry
-            if self.lastentry:
-                for index in range(0, len(self.lastentry.pages)):
-                    editpane = EntryPage(self.lastentry.pages[index], index, self.contentFrame)
-                    self.editpages.append(editpane)
+            self._rebuildPage()
+    
+    def _rebuildContent(self):
+        self._rebuildPage()
+        self.content.contentMutated()
+
+    def _rebuildPage(self):
+        while len(self.editpages) > 0:
+            self.editpages.pop().destroy()
+        self.lastentry = self.content.editEntry
+        if self.lastentry:
+            for index in range(0, len(self.lastentry.pages)):
+                editpane = EntryPage(self.lastentry.pages[index], index, self._rebuildContent, self.contentFrame)
+                self.editpages.append(editpane)
         self._layoutPages()
 
     def _layoutPages(self):

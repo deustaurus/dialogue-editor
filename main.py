@@ -72,11 +72,12 @@ class DialogueEditor:
                         if lineflag == 'r':
                             entry.entrytype = EntryType.DIARY
                         linetext = linenode.text.split('%r')
+                        # Delete dummy page from the created node
+                        entry.pages = []
                         for line in linetext:
                             line = line.replace('\\n', '\n')
                             page = entry.addPage()
                             page.content = line
-                        entry.editPage = 0
             self.content.editEntry = None
             self.content.contentMutated()
 

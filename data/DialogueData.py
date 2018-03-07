@@ -17,22 +17,19 @@ class DialogueEntry:
         self.id = id
         self.parent = parent
         self.entrytype = entrytype
-        self.pages = []
-        self.editPage = 0
+        self.pages = [DialoguePage(self)]
     
     def getPath(self):
         return self.parent.getPath() + '.' + self.id
     
-    def addPage(self):
+    def addPage(self, index=None):
         page = DialoguePage(self)
-        self.pages.append(page)
-        self.editPage = len(self.pages) - 1
+        if index is not None:
+            self.pages.insert(index,page)
+        else:
+            # If we didn't apply an index, we just append
+            self.pages.append(page)
         return page
-    
-    def currentPage(self):
-        if len(self.pages) < 1:
-            return None
-        return self.pages[self.editPage]
 
 class DialogueGroup:
     def __init__(self, id, parent=None):
