@@ -34,9 +34,7 @@ class DialogueTree:
         dataCols = ('group', 'type', 'pages')
         self.tree = ttk.Treeview(columns=dataCols, displaycolumns=['type','pages'], selectmode='browse')
         yscroll = ttk.Scrollbar(orient=VERTICAL, command=self.tree.yview)
-        xscroll = ttk.Scrollbar(orient=HORIZONTAL, command=self.tree.xview)
         self.tree['yscroll'] = yscroll.set
-        self.tree['xscroll'] = xscroll.set
 
         self.tree.heading('#0', text='Dialogue Tree', anchor=W)
         self.tree.heading('type', text='Type', anchor=W)
@@ -47,7 +45,6 @@ class DialogueTree:
 
         self.tree.grid(in_=master, row=0, column=0, sticky=NSEW)
         yscroll.grid(in_=master, row=0, column=1, sticky=NS)
-        xscroll.grid(in_=master, row=1, column=0, sticky=EW)
 
         master.rowconfigure(0, weight=1)
         master.columnconfigure(0, weight=1)

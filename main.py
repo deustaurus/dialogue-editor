@@ -77,6 +77,7 @@ class DialogueEditor:
                             page = entry.addPage()
                             page.content = line
                         entry.editPage = 0
+            self.content.editEntry = None
             self.content.contentMutated()
 
 root = Tk()

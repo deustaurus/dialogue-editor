@@ -3,9 +3,9 @@ from tkinter import ttk
 from data.DialogueContent import DialogueContent
 from widget.TextModified import TextModified
 from enum import Enum
+from views.EntryPage import EntryPage
 
-# TODO Text box right click
-# TODO Text box copy paste
+# TODO scroll canvas
 
 class EntryState(Enum):
     INVALID = 0
@@ -16,170 +16,102 @@ class EntryPanel:
         self.master = master
         self.content = content
 
-        self.WRAP_WIDTH = 37 # From the game
-        self.WRAP_HEIGHT = 7 # From the game
+        # Take the right half of the window
+        panelFrame = Frame(master)
+        panelFrame.grid(row=0, column=1, sticky=NSEW)
+        panelFrame.columnconfigure(0, weight=1)
+        panelFrame.rowconfigure(1, weight=1)
 
-        self.entrystate = EntryState.INVALID
-        entryFrame = Frame(master)
-        entryFrame.grid(row=0, column=1, sticky=NSEW)
+        # Frame for detail readouts
+        detailsFrame = Frame(panelFrame)
+        detailsFrame.grid(row=0, column=0, sticky=NSEW)
 
-        entryButtonFrame = Frame(master, width=50)
-        entryButtonFrame.grid(row=0, column=2, sticky=NSEW)
+        # Frame for canvas
+        canvasFrame = Frame(panelFrame)
+        canvasFrame.grid(row=1, column=0, sticky=NSEW)
+        canvasFrame.rowconfigure(0, weight=1)
+        canvasFrame.columnconfigure(0, weight=1)
 
-        self._createPageEdit(entryFrame)
-        self._createPageButtons(entryButtonFrame)
+        # # Calculate initial width of widgets
+        testpage = EntryPage(None, 0, canvasFrame)
+        testpage.grid(row=0, column=0)
+        master.update_idletasks()
+        self.panelwidgetwidth = testpage.width()
+        self.panelwidgetheight = testpage.height()
+        testpage.destroy()
+
+        # # Put canvas in frame
+        self.canvas = Canvas(canvasFrame, highlightthickness=0)
+        self.canvas.grid(row=0, column=0, sticky=NSEW)
+        self.canvas.bind("<Configure>", self.on_resize)
+        self.canvas.width = self.canvas.winfo_reqwidth()
+        self.canvas.height = self.canvas.winfo_reqheight()
+        self.canvas.rowconfigure(0, weight=1)
+        self.canvas.columnconfigure(0, weight=1)
+
+        # Put final scrolling content frame in canvas
+        self.contentFrame = Frame(self.canvas)
+        self.contentFrame.grid(row=0, column=0, sticky=NSEW)
+
+        # Hook up the scroll bar next to the canvas
+        yscroll = ttk.Scrollbar(canvasFrame, orient=VERTICAL, command=self.canvas.yview)
+        self.canvas.configure(yscrollcommand=yscroll.set)
+        yscroll.grid(row=0, column=1, sticky=NS)
+        self.canvas.create_window((0,0), window=self.contentFrame, anchor=NW)
+
+        # TODO Add detail labels here
+        self.labeltitle = Label(detailsFrame, text='')
+        self.labeltitle.grid(row=0, column=0)
+
+        self.editpages = []
+        self.lastentry = None
+
+    def on_resize(self, event):
+        if self.canvas.width == event.width and self.canvas.height == event.height:
+            # If no change, don't layout again
+            return
+        self.canvas.width = event.width
+        self.canvas.height = event.height
+        self._layoutPages()
 
     def refreshView(self):
-        self._populateEntryEditing()
-
-    def _createPageEdit(self, master):
-        contentcolumn = 2
-        self.separatorLeft = ttk.Separator(master, orient=VERTICAL)
-        self.separatorLeft.grid(row=0, column=0, rowspan=7, sticky=NS)
-        self.separatorRight = ttk.Separator(master, orient=VERTICAL)
-        self.separatorRight.grid(row=0, column=4, rowspan=7, sticky=NS)
-
-        self.pageEditTitle = Label(master, text='Title', anchor=W)
-        self.pageEditTitle.grid(row=1, column=contentcolumn, sticky=EW)
-        self.pageEditEntryDetails = Label(master, text='Details', anchor=W)
-        self.pageEditEntryDetails.grid(row=2, column=contentcolumn, sticky=EW)
-
-        pageEditFrame = Frame(master)
-        pageEditFrame.grid(row=4, column=contentcolumn, sticky=NSEW)
-        self.pageEditPane = TextModified(pageEditFrame, wrap=WORD, width=self.WRAP_WIDTH, height=self.WRAP_HEIGHT)
-        self.pageEditPane.insert(END, 'Lorem ipsum dolor est')
-        self.pageEditPane.grid(row=0, column=0, sticky=NW)
-        self.pageEditPane.bind('<<TextModified>>', self._pageModified)
-        yscroll = ttk.Scrollbar(pageEditFrame, orient=VERTICAL, command=self.pageEditPane.yview)
-        self.pageEditPane.configure(yscrollcommand=yscroll.set)
-        yscroll.grid(row=0, column=1, sticky=NS)
-        pageEditFrame.columnconfigure(0, weight=1)
-        pageEditFrame.rowconfigure(0, weight=1)
-
-        self.pageEditDetails = Label(master, text='Page 1 Details', anchor=W)
-        self.pageEditDetails.grid(row=5, column=contentcolumn, sticky=EW)
-
-        master.rowconfigure(0, minsize=15) # Padding
-        master.rowconfigure(4, weight=1)
-        master.rowconfigure(6, minsize=15) # Padding
-        master.columnconfigure(1, minsize=15) # Padding
-        master.columnconfigure(contentcolumn, weight=1)
-        master.columnconfigure(3, minsize=15) # Padding
+        self._rebuildPage()
     
-    def _createPageButtons(self, master):
-        contentcolumn = 1
-        textsize = 5
-        padrows = [0,2,4,6,8,10,12,14]
-        self.pagebuttons = []
+    def _rebuildPage(self):
+        if self.lastentry != self.content.editEntry:
+            while len(self.editpages) > 0:
+                self.editpages.pop().destroy()
+            self.lastentry = self.content.editEntry
+            if self.lastentry:
+                for index in range(0, len(self.lastentry.pages)):
+                    editpane = EntryPage(self.lastentry.pages[index], index, self.contentFrame)
+                    self.editpages.append(editpane)
+        self._layoutPages()
 
-        button = Button(master, text='Add', width=textsize, command=self._addPage)
-        button.grid(row=1, column=contentcolumn)
-        self.pagebuttons.append(button)
-
-        # TODO Insert
-
-        button = Button(master, text='Rem', width=textsize)
-        button.grid(row=3, column=contentcolumn)
-        self.pagebuttons.append(button)
-        
-        separator = ttk.Separator(master)
-        separator.grid(row=5, column=0, columnspan=5, sticky=EW)
-
-        button = Button(master, text='First', width=textsize, command=self._firstPage)
-        button.grid(row=7, column=contentcolumn)
-        self.pagebuttons.append(button)
-
-        button = Button(master, text='Prev', width=textsize, command=self._prevPage)
-        button.grid(row=9, column=contentcolumn)
-        self.pagebuttons.append(button)
-
-        button = Button(master, text='Next', width=textsize, command=self._nextPage)
-        button.grid(row=11, column=contentcolumn)
-        self.pagebuttons.append(button)
-
-        button = Button(master, text='Last', width=textsize, command=self._lastPage)
-        button.grid(row=13, column=contentcolumn)
-        self.pagebuttons.append(button)
-
-        separator = ttk.Separator(master)
-        separator.grid(row=15, column=0, columnspan=5, sticky=EW)
-
-        # TODO Toggle Type
-        
-        master.columnconfigure(0, minsize=5)
-        master.columnconfigure(2, minsize=5)
-        for num in padrows:
-            master.rowconfigure(num, minsize=15)
-    
-    def _populateEntryEditing(self):
-        self.entrystate = EntryState.INVALID
-        if self.content.editEntry == None:
-            buttonstate = DISABLED
-            self.pageEditTitle.config(text='No Entry Selected')
-            self.pageEditEntryDetails.config(text='...')
-            self._clearEditPane(DISABLED)
-            self.pageEditDetails.config(text='...')
-        else:
-            buttonstate = ACTIVE
-            currentpage = self.content.editEntry.editPage + 1
-            numpages = len(self.content.editEntry.pages)
-            if numpages < 1:
-                currentpage = 0
-                self._clearEditPane(DISABLED)
-            else:
-                self._clearEditPane(NORMAL)
-                self.pageEditPane.insert(END, self.content.editEntry.currentPage().content)
-                # Pane entry is not enabled until now
-                self.entrystate = EntryState.VALID
-            self._updatePageEditDetails()
-            self.pageEditTitle.config(text='Editing Entry: ' + self.content.editEntry.getPath())
-            self.pageEditEntryDetails.config(text='Page: ' + str(currentpage) + '/' + str(numpages))
-        
-        for button in self.pagebuttons:
-            button.config(state=buttonstate)
-
-    def _clearEditPane(self, nextstate):
-        self.pageEditPane.config(state=NORMAL)
-        self.pageEditPane.delete(1.0,END)
-        self.pageEditPane.config(state=nextstate)
-    
-    def _addPage(self):
-        self.entrystate = EntryState.INVALID
-        self.content.editEntry.addPage()
-        self.content.editEntry.editPage = len(self.content.editEntry.pages) - 1
-        self.content.contentMutated()
-    
-    def _firstPage(self):
-        self.entrystate = EntryState.INVALID
-        self.content.editEntry.editPage = 0
-        self.content.contentMutated()
-    
-    def _prevPage(self):
-        self.entrystate = EntryState.INVALID
-        self.content.editEntry.editPage = max(self.content.editEntry.editPage - 1, 0)
-        self.content.contentMutated()
-    
-    def _nextPage(self):
-        self.entrystate = EntryState.INVALID
-        self.content.editEntry.editPage = max(min(self.content.editEntry.editPage + 1, len(self.content.editEntry.pages) - 1), 0)
-        self.content.contentMutated()
-    
-    def _lastPage(self):
-        self.entrystate = EntryState.INVALID
-        self.content.editEntry.editPage = max(len(self.content.editEntry.pages) - 1, 0)
-        self.content.contentMutated()
-    
-    def _updatePageEditDetails(self):
-        if self.content.editEntry:
-            pagecontent = self.content.editEntry.currentPage()
-            if pagecontent:
-                self.pageEditDetails.config(text='Characters: ' + str(len(pagecontent.content)))
-                return
-        self.pageEditDetails.config(text='...')
-
-    def _pageModified(self, event):
-        if self.entrystate == EntryState.INVALID:
+    def _layoutPages(self):
+        if self.lastentry == None:
+            self.labeltitle.config(text='No Entry Selected')
             return
-        pane = self.pageEditPane.get('1.0',END).rstrip()
-        self.content.editEntry.currentPage().content = pane
-        self._updatePageEditDetails()
+        self.labeltitle.config(text='Entry: ' + self.lastentry.getPath())
+
+        accumwidth = 0
+        accumheight = self.panelwidgetheight
+        row = 0
+        column = 0
+
+        for page in self.editpages:
+            if accumwidth + self.panelwidgetwidth > self.canvas.width and column > 0:
+                accumwidth = 0
+                column = 0
+                row += 1
+                accumheight += self.panelwidgetheight
+            page.grid(row=row, column=column, sticky=NW)            
+            column += 1
+            accumwidth += self.panelwidgetwidth
+        
+        scroll = (0,0,self.canvas.width,max(accumheight,self.canvas.height))
+        self.canvas.configure(
+            scrollregion=scroll,
+            width=self.canvas.width,
+            height=self.canvas.height
+        )

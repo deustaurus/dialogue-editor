@@ -3,6 +3,7 @@ import string
 from data.DialogueData import DialogueGroup, EntryType
 
 # TODO undo tree?
+# TODO modified flags
 
 class DialogueContent:
     def __init__(self):
