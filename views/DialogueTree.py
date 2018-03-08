@@ -6,9 +6,8 @@ from data.DialogueContent import DialogueContent
 from widget.SimpleDialog import Dialog
 from data.Consts import nameblacklistcsharp, ValidateResult
 
-# TODO some nice bg colors and stuff for list
-# TODO bg color for currently edited entry and parents
-# TODO make buttons for the right click menu stuff
+# TODO tag entries with color
+# TODO keyboard commands
 
 class DragState(Enum):
     NONE = 0
@@ -24,11 +23,42 @@ class DialogueTree:
         self.treeselection = None
         self.verifynode = None
 
-        treeFrame = Frame(master)
-        treeFrame.grid(row=0, column=0, sticky=NSEW)
-    
+        outerFrame = Frame(master)
+        outerFrame.grid(row=0, column=0, sticky=NSEW)
+        outerFrame.columnconfigure(0, weight=1)
+        outerFrame.rowconfigure(1, weight=1)
+        
+        topFrame = Frame(outerFrame, padx=5, pady=5)
+        topFrame.grid(row=0, column=0, sticky=W)
+        self._createTopFrame(topFrame)
+
+        treeFrame = Frame(outerFrame)
+        treeFrame.grid(row=1, column=0, sticky=NSEW)
+
         self._createTree(treeFrame)
-        self._createRightClickMenu(master)
+        self._createRightClickMenu(outerFrame)
+
+    def _createTopFrame(self, master):
+        self.buttonNewGroup = Button(master, text='New Group', command=self._actionNewGroup)
+        self.buttonNewGroup.grid(row=0, column=0, padx=5, sticky=W)
+
+        self.buttonNewEntry = Button(master, text='New Entry', command=self._actionNewEntry)
+        self.buttonNewEntry.grid(row=0, column=1, padx=5, sticky=W)
+        
+        sep = ttk.Separator(master, orient=VERTICAL)
+        sep.grid(row=0, column=2, sticky=NS, padx=5, )
+
+        self.buttonDuplicate = Button(master, text='Duplicate', command=self._actionDuplicate)
+        self.buttonDuplicate.grid(row=0, column=3, padx=5, sticky=W)
+        
+        self.buttonRename = Button(master, text='Rename', command=self._actionRename)
+        self.buttonRename.grid(row=0, column=4, sticky=W, padx=5)
+
+        sep = ttk.Separator(master, orient=VERTICAL)
+        sep.grid(row=0, column=5, padx=5, sticky=NS)
+        
+        self.buttonDelete = Button(master, text='Delete', command=self._actionDelete)
+        self.buttonDelete.grid(row=0, column=6, sticky=W, padx=5)
 
     def _createTree(self, master):
         dataCols = ('group', 'type', 'pages')
@@ -49,6 +79,7 @@ class DialogueTree:
         master.rowconfigure(0, weight=1)
         master.columnconfigure(0, weight=1)
 
+        self.tree.bind('<<TreeviewSelect>>', self._treeSelect)
         self.tree.bind('<Button-3>', self._rightClickTree)
         self.tree.bind("<ButtonPress-1>", self._leftClickTree)
         self.tree.bind("<ButtonRelease-1>", self._leftClickTreeRelease, add='+')
@@ -155,19 +186,24 @@ class DialogueTree:
         deletetype = self.treeselection[3]
         if deletetype == 'group':
             node = self.content.data.findNode(self.treeselection[0])
-            # TODO Warn about how many children we're deleting?
+            countchildren = node.countChildren() + 1
+            countentries = node.countEntries()
+            countpages = node.countPages()
+            message = 'Are you sure you want to delete \"' + node.id + '\"?\n\n'
+            message += str(countchildren) + ' group(s) will be deleted containing '
+            message += str(countentries) + ' entries and '
+            message += str(countpages) + ' page(s).'
             if messagebox.askyesno(
                 'Delete Node?', 
-                'Are you sure you want to delete \"' + node.id + '\"?', 
+                message,
                 default=messagebox.NO
             ):
                 node.parent.children.remove(node)
         elif deletetype == 'entry':
             entry = self.content.data.findEntry(self.treeselection[0])
-            # TODO Warn about how many pages we're deleting
             if messagebox.askyesno(
                 'Delete Entry?',
-                'Are you sure you want to delete \"' + entry.id + '\"?',
+                'Are you sure you want to delete \"' + entry.id + '\"?\n\n' + str(len(entry.pages)) + ' page(s) will be deleted.',
                 default=messagebox.NO
             ):
                 entry.parent.entries.remove(entry)
@@ -185,44 +221,65 @@ class DialogueTree:
             entry.parent.addEntry(self._incrementName(entry.id, self._validateEntry))
         self.content.contentMutated()
 
+    def _treeSelect(self, event):
+        iid = self.tree.selection()
+        if iid:
+            self._setupButtons(iid[0])
+
     def _rightClickTree(self, event):
         # Clear any drag state
         self.dragstate = DragState.NONE
         iid = self.tree.identify_row(event.y)
         if iid:
             try:
-                # Default settings, group mode
-                self.popupmenu.entryconfig(0, state=ACTIVE) # New Group
-                self.popupmenu.entryconfig(1, state=ACTIVE) # New Entry
-                self.popupmenu.entryconfig(2, state=ACTIVE) # Duplicate
-                self.popupmenu.entryconfig(4, state=ACTIVE) # Rename
-                self.popupmenu.entryconfig(6, state=ACTIVE) # Delete
-                # Get information
+                # self._setupButtons(iid)
                 self.tree.selection_set(iid)
-                self.treeselection = self._getItemValuesByTreeId(iid)
-                seltype = self.treeselection[3]
-                # Check information
-                if seltype == 'root':
-                    # Root content can't be deleted, or have entries added
-                    self.popupmenu.entryconfig(1, state=DISABLED) # New Entry
-                    self.popupmenu.entryconfig(2, state=DISABLED) # Duplicate
-                    self.popupmenu.entryconfig(4, state=DISABLED) # Rename
-                    self.popupmenu.entryconfig(6, state=DISABLED) # Delete
-                elif seltype == 'empty':
-                    # You can't delete an empty object
-                    self.popupmenu.entryconfig(2, state=DISABLED) # Duplicate
-                    self.popupmenu.entryconfig(4, state=DISABLED) # Rename
-                    self.popupmenu.entryconfig(6, state=DISABLED) # Delete           
-
                 self.popupmenu.tk_popup(event.x_root + 50, event.y_root + 10, 0)
             finally:
                 self.popupmenu.grab_release()
         else:
             self.tree.selection_set()
     
+    def _setupButtons(self, iid):
+        # Default settings, group mode
+        self.popupmenu.entryconfig(0, state=ACTIVE) # New Group
+        self.popupmenu.entryconfig(1, state=ACTIVE) # New Entry
+        self.popupmenu.entryconfig(2, state=ACTIVE) # Duplicate
+        self.popupmenu.entryconfig(4, state=ACTIVE) # Rename
+        self.popupmenu.entryconfig(6, state=ACTIVE) # Delete
+        self.buttonNewGroup.config(state=NORMAL)
+        self.buttonNewEntry.config(state=NORMAL)
+        self.buttonDuplicate.config(state=NORMAL)
+        self.buttonRename.config(state=NORMAL)
+        self.buttonDelete.config(state=NORMAL)
+        # Get information
+        # self.tree.selection_set(iid)
+        self.treeselection = self._getItemValuesByTreeId(iid)
+        seltype = self.treeselection[3]
+        # Check information
+        if seltype == 'root':
+            # Root content can't be deleted, or have entries added
+            self.popupmenu.entryconfig(1, state=DISABLED) # New Entry
+            self.popupmenu.entryconfig(2, state=DISABLED) # Duplicate
+            self.popupmenu.entryconfig(4, state=DISABLED) # Rename
+            self.popupmenu.entryconfig(6, state=DISABLED) # Delete
+            self.buttonNewEntry.config(state=DISABLED)
+            self.buttonDuplicate.config(state=DISABLED)
+            self.buttonRename.config(state=DISABLED)
+            self.buttonDelete.config(state=DISABLED)
+        elif seltype == 'empty':
+            # You can't delete an empty object
+            self.popupmenu.entryconfig(2, state=DISABLED) # Duplicate
+            self.popupmenu.entryconfig(4, state=DISABLED) # Rename
+            self.popupmenu.entryconfig(6, state=DISABLED) # Delete
+            self.buttonDuplicate.config(state=DISABLED)
+            self.buttonRename.config(state=DISABLED)
+            self.buttonDelete.config(state=DISABLED)
+
     def _leftClickTree(self, event):
         iid = self.tree.identify_row(event.y)
         if iid:
+            self._setupButtons(iid)
             val = self._getItemValuesByTreeId(iid)
             if val[3] == 'root' or val[3] == 'empty':
                 # We don't allow dragging of the root, of course!

@@ -52,6 +52,40 @@ class DialogueGroup:
                 return child
         return node.addNode(id)
 
+    def countChildren(self):
+        # Pass num in an array so it's by ref
+        num = [0]
+        self._addCountChildren(num)
+        return num[0]
+    
+    def _addCountChildren(self, num):
+        num[0] += len(self.children)
+        for child in self.children:
+            child._addCountChildren(num)
+
+    def countEntries(self):
+        # Pass num in an array so it's by ref
+        num = [0]
+        self._addCountEntries(num)
+        return num[0]
+
+    def _addCountEntries(self, num):
+        num[0] += len(self.entries)
+        for child in self.children:
+            child._addCountEntries(num)
+    
+    def countPages(self):
+        # Pass num in an array so it's by ref
+        num = [0]
+        self._addCountPages(num)
+        return num[0]
+    
+    def _addCountPages(self, num):
+        for entry in self.entries:
+            num[0] += len(entry.pages)
+        for child in self.children:
+            child._addCountPages(num)
+
     def addNode(self, id):
         node = DialogueGroup(id, self)
         self.children.append(node)

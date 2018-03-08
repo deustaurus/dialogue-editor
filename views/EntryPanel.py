@@ -1,11 +1,10 @@
+import math
 from tkinter import *
 from tkinter import ttk
 from data.DialogueContent import DialogueContent
 from widget.TextModified import TextModified
 from enum import Enum
 from views.EntryPage import EntryPage
-
-# TODO scroll canvas
 
 class EntryState(Enum):
     INVALID = 0
@@ -65,6 +64,12 @@ class EntryPanel:
 
         self.editpages = []
         self.lastentry = None
+        self.canvas.bind_all("<MouseWheel>", self._on_mousewheel)
+
+    def _on_mousewheel(self, event):
+        widget = self.master.winfo_containing(event.x_root, event.y_root)
+        if '!canvas' in str(widget):
+            self.canvas.yview_scroll(-1 * int(math.copysign(1, event.delta)), "units")
 
     def on_resize(self, event):
         if self.canvas.width == event.width and self.canvas.height == event.height:

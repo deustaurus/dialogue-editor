@@ -1,12 +1,13 @@
 import os
 import xml.etree.ElementTree
+from tkinter import *
 from data.DialogueData import *
 from data.DialogueContent import DialogueContent
 from views.DialogueTree import DialogueTree
 from views.EntryPanel import EntryPanel
-from tkinter import Menu, Tk, filedialog
+from tkinter import filedialog
 
-# TODO import from xml
+# TODO project format save/load
 # TODO export to xml
 # TODO language modes?
 # TODO project file, too for open / save
@@ -17,15 +18,24 @@ class DialogueEditor:
 
         master.title("Dialogue Editor")
         master.geometry("800x600")
+        master.rowconfigure(1, weight=1)
+        master.columnconfigure(0, weight=1)
+
         self._setupMenuBar(master)
+
+        # TODO top bar with options
 
         self.content = DialogueContent()
         self.content.mutateEvent.append(self.refreshViews)
-        self.treeview = DialogueTree(master,self.content)
-        self.entrypanel = EntryPanel(master,self.content)
+
+        mainFrame = Frame(master)
+        mainFrame.grid(row=1, column=0, sticky=NSEW)
+
+        self.treeview = DialogueTree(mainFrame,self.content)
+        self.entrypanel = EntryPanel(mainFrame,self.content)
         
-        master.rowconfigure(0, weight=1)
-        master.columnconfigure(1, weight=1)
+        mainFrame.rowconfigure(0, weight=1)
+        mainFrame.columnconfigure(1, weight=1)
 
         self.refreshViews()
 
@@ -33,8 +43,11 @@ class DialogueEditor:
         menubar = Menu(master)
 
         filemenu = Menu(menubar, tearoff=0)
-        filemenu.add_command(label="Open", command=self.openFile)
-        filemenu.add_command(label="Save")
+        filemenu.add_command(label="Open Project")
+        filemenu.add_command(label="Save Project")
+        filemenu.add_separator()
+        filemenu.add_command(label='Import XML', command=self.openFile)
+        filemenu.add_command(label='Export XML')
         filemenu.add_separator()
         filemenu.add_command(label="Exit", command=master.quit)
         menubar.add_cascade(label="File", menu=filemenu)
@@ -53,7 +66,7 @@ class DialogueEditor:
     def openFile(self):
         # TODO lots of logging and safety here
         pathdesktop = os.path.join(os.environ["HOMEPATH"], "Desktop")
-        pathload = filedialog.askopenfilename(initialdir=pathdesktop, title='Open File', filetypes=[("xml files","*.xml")])
+        pathload = filedialog.askopenfilename(initialdir=pathdesktop, title='Import XML', filetypes=[("xml files","*.xml")])
         if pathload:
             self.parseFile(pathload)
 
