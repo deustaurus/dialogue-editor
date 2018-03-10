@@ -1,16 +1,12 @@
 import math
 from tkinter import *
 from tkinter import ttk
-from data.DialogueContent import DialogueContent
-from widget.TextModified import TextModified
+from DialogueContent import DialogueContent
+from TextModified import TextModified
 from enum import Enum
-from views.EntryPage import EntryPage
+from TextPage import TextPage
 
-class EntryState(Enum):
-    INVALID = 0
-    VALID = 1
-
-class EntryPanel:
+class TextPanel:
     def __init__(self, master, content=DialogueContent):
         self.master = master
         self.content = content
@@ -24,6 +20,7 @@ class EntryPanel:
         # Frame for detail readouts
         detailsFrame = Frame(panelFrame)
         detailsFrame.grid(row=0, column=0, sticky=NSEW, padx=5, pady=5)
+        detailsFrame.columnconfigure(0, weight=1)
 
         # Frame for canvas
         canvasFrame = Frame(panelFrame)
@@ -31,15 +28,15 @@ class EntryPanel:
         canvasFrame.rowconfigure(0, weight=1)
         canvasFrame.columnconfigure(0, weight=1)
 
-        # # Calculate initial width of widgets
-        testpage = EntryPage(None, 0, None, canvasFrame)
+        # Calculate initial width of widgets
+        testpage = TextPage(None, 0, None, canvasFrame)
         testpage.grid(row=0, column=0)
         master.update_idletasks()
         self.panelwidgetwidth = testpage.width()
         self.panelwidgetheight = testpage.height()
         testpage.destroy()
 
-        # # Put canvas in frame
+        # Put canvas in frame
         self.canvas = Canvas(canvasFrame, highlightthickness=0)
         self.canvas.grid(row=0, column=0, sticky=NSEW)
         self.canvas.bind("<Configure>", self.on_resize)
@@ -60,11 +57,23 @@ class EntryPanel:
 
         # TODO Add detail labels here
         self.labeltitle = Label(detailsFrame, text='')
-        self.labeltitle.grid(row=0, column=0)
+        self.labeltitle.grid(row=0, column=0, sticky=W)
+
+        buttonRow = Frame(detailsFrame)
+        buttonRow.grid(row=1, column=0, sticky=NSEW)
+
+        self.colorbuttons = []
+        self._addColorButton(buttonRow, 0, '#ff0000')
+        self._addColorButton(buttonRow, 1, '#00ff00')
 
         self.editpages = []
         self.lastentry = None
         self.canvas.bind_all("<MouseWheel>", self._on_mousewheel)
+
+    def _addColorButton(self, master, index, color):
+        button = Checkbutton(master, bg=color, activebackground=color)
+        button.grid(row=0, column=index, sticky=W, padx=3)
+        self.colorbuttons.append(button)
 
     def _on_mousewheel(self, event):
         widget = self.master.winfo_containing(event.x_root, event.y_root)
@@ -93,7 +102,7 @@ class EntryPanel:
         self.lastentry = self.content.editEntry
         if self.lastentry:
             for index in range(0, len(self.lastentry.pages)):
-                editpane = EntryPage(self.lastentry.pages[index], index, self._rebuildContent, self.contentFrame)
+                editpane = TextPage(self.lastentry.pages[index], index, self._rebuildContent, self.contentFrame)
                 self.editpages.append(editpane)
         self._layoutPages()
 

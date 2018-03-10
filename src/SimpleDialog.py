@@ -1,5 +1,5 @@
 from tkinter import *
-from data.Consts import ValidateResult
+from Consts import ValidateResult
 
 class Dialog(Toplevel):
     def __init__( self,  parent, title=None, label='Name:', inittext='', validate=None ):

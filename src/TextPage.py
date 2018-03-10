@@ -1,7 +1,7 @@
 import tkinter
 from tkinter import *
 from tkinter import messagebox
-from widget.TextModified import TextModified
+from TextModified import TextModified
 
 # TODO Text box right click
 # TODO Text box copy paste
@@ -10,7 +10,7 @@ _WRAP_WIDTH = 37 # From the game
 _WRAP_HEIGHT = 7 # From the game
 _BUTTON_WIDTH = 5 # Width of buttons
 
-class EntryPage(tkinter.Frame):
+class TextPage(tkinter.Frame):
     def __init__(self, page, index, rebuildcommand, master=None, cnf={}, **kw):
         tkinter.Frame.__init__(self, master, cnf, **kw)
         self.config(padx=5,pady=5)

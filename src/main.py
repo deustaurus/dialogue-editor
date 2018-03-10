@@ -1,10 +1,10 @@
 import os
 import xml.etree.ElementTree
 from tkinter import *
-from data.DialogueData import *
-from data.DialogueContent import DialogueContent
-from views.DialogueTree import DialogueTree
-from views.EntryPanel import EntryPanel
+from DialogueData import *
+from DialogueContent import DialogueContent
+from DialogueTree import DialogueTree
+from TextPanel import TextPanel
 from tkinter import filedialog
 
 # TODO project format save/load
@@ -32,7 +32,7 @@ class DialogueEditor:
         mainFrame.grid(row=1, column=0, sticky=NSEW)
 
         self.treeview = DialogueTree(mainFrame,self.content)
-        self.entrypanel = EntryPanel(mainFrame,self.content)
+        self.textpanel = TextPanel(mainFrame,self.content)
         
         mainFrame.rowconfigure(0, weight=1)
         mainFrame.columnconfigure(1, weight=1)
@@ -61,7 +61,7 @@ class DialogueEditor:
 
     def refreshViews(self):
         self.treeview.refreshView()
-        self.entrypanel.refreshView()
+        self.textpanel.refreshView()
     
     def openFile(self):
         # TODO lots of logging and safety here

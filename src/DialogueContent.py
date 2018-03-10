@@ -1,6 +1,6 @@
 import re
 import string
-from data.DialogueData import DialogueGroup, EntryType
+from DialogueData import DialogueGroup, EntryType
 
 # TODO undo tree?
 # TODO modified flags

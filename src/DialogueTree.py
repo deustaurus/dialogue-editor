@@ -2,9 +2,9 @@ import string
 from enum import Enum
 from tkinter import *
 from tkinter import ttk, messagebox
-from data.DialogueContent import DialogueContent
-from widget.SimpleDialog import Dialog
-from data.Consts import nameblacklistcsharp, ValidateResult
+from DialogueContent import DialogueContent
+from SimpleDialog import Dialog
+from Consts import nameblacklistcsharp, ValidateResult
 
 # TODO tag entries with color
 # TODO keyboard commands
