@@ -1,5 +1,6 @@
 from enum import Enum
 from natsort import natsort_keygen, ns
+from DialogueContent import DialogueContent
 
 # TODO add region
 
@@ -7,31 +8,7 @@ class EntryType(Enum):
     NONE = 'Default'
     DIARY = 'Diary'
 
-class DialoguePage:
-    def __init__(self, parent):
-        self.parent = parent
-        self.content = ''
-
-class DialogueEntry:
-    def __init__(self, id, entrytype, parent):
-        self.id = id
-        self.parent = parent
-        self.entrytype = entrytype
-        self.pages = [DialoguePage(self)]
-    
-    def getPath(self):
-        return self.parent.getPath() + '.' + self.id
-    
-    def addPage(self, index=None):
-        page = DialoguePage(self)
-        if index is not None:
-            self.pages.insert(index,page)
-        else:
-            # If we didn't apply an index, we just append
-            self.pages.append(page)
-        return page
-
-class DialogueGroup:
+class Group:
     def __init__(self, id, parent=None):
         self.id = id
         self.parent = parent
@@ -87,13 +64,13 @@ class DialogueGroup:
             child._addCountPages(num)
 
     def addNode(self, id):
-        node = DialogueGroup(id, self)
+        node = Group(id, self)
         self.children.append(node)
         self.sortNodes()
         return node
     
     def addEntry(self, id, entrytype=EntryType.NONE):
-        result = DialogueEntry(id, entrytype, self)
+        result = Entry(id, entrytype, self)
         self.entries.append(result)
         self.sortEntries()
         return result
@@ -147,3 +124,51 @@ class DialogueGroup:
                 return entry
         # This really shouldn't happen!
         return None
+
+class Entry:
+    def __init__(self, id, entrytype=EntryType, parent=Group):
+        self.id = id
+        self.parent = parent
+        self.entrytype = entrytype
+        self._region = {}
+        self.getRegion('en')
+    
+    def getPath(self):
+        return self.parent.getPath() + '.' + self.id
+
+    def getRegion(self, id):
+        if id not in self._region:
+            self._region[id] = Region(self, id)
+        return self._region[id]
+
+    def addPage(self, index=None):
+        return self.getRegion(DialogueContent.region).addPage(index)
+    
+    def getPages(self):
+        return self.getRegion(DialogueContent.region).getPages()
+
+class Region:
+    def __init__(self, parent, id):
+        self.parent = parent
+        self._pages = [Page(self)]
+        self.id = id
+    
+    def addPage(self, index=None):
+        page = Page(self)
+        if index is not None:
+            self._pages.insert(index,page)
+        else:
+            # If we didn't apply an index, we just append
+            self._pages.append(page)
+        return page
+    
+    def getPages(self):
+        return self._pages
+    
+    def clearPages(self):
+        self._pages = []
+
+class Page:
+    def __init__(self, parent=Region):
+        self.parent = parent
+        self.content = ''

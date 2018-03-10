@@ -2,6 +2,7 @@ import string
 from enum import Enum
 from tkinter import *
 from tkinter import ttk, messagebox
+from DialogueData import *
 from DialogueContent import DialogueContent
 from SimpleDialog import Dialog
 from Consts import nameblacklistcsharp, ValidateResult
@@ -388,14 +389,14 @@ class DialogueTree:
     def _setItemOpen(self, id, openstate):
         self.tree.item(id, open=openstate)
 
-    def _populateTree(self, node, tree):
+    def _populateTree(self, node:Group, tree):
         nodetype = 'group'
         if node.parent == None:
             nodetype = 'root'
         treenode = self.tree.insert(tree, END, text=node.id, values=[node.getPath(), '', '', nodetype])
         # Show Entries
         for entry in node.entries:
-            self.tree.insert(treenode, END, text=entry.id, values=[entry.getPath(), entry.entrytype.value, len(entry.pages), 'entry'])
+            self.tree.insert(treenode, END, text=entry.id, values=[entry.getPath(), entry.entrytype.value, len(entry.getPages()), 'entry'])
         # Show children
         for child in node.children:
             self._populateTree(child, treenode)

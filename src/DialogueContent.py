@@ -1,11 +1,15 @@
 import re
 import string
-from DialogueData import DialogueGroup, EntryType
+import DialogueData
 
 # TODO undo tree?
 # TODO modified flags
 
 class DialogueContent:
+
+    # Static
+    region = 'en'
+
     def __init__(self):
         # Editing Content
         self.editEntry = None
@@ -13,7 +17,7 @@ class DialogueContent:
         self.mutateEvent = []
 
         # Dummy Content
-        self.data = DialogueGroup('Content')
+        self.data = DialogueData.Group('Content')
         common = self.data.addNode('Common10')
         common.addNode('Common10')
         common.addEntry('Chum')
@@ -23,9 +27,9 @@ class DialogueContent:
         common.addEntry('Crum_200')
         common.addEntry('Crum_2')
         common.addEntry('Blum')
-        common.addEntry('Cram', EntryType.DIARY)
+        common.addEntry('Cram', DialogueData.EntryType.DIARY)
         table = common.addNode('Common 1')
-        table.addEntry('Zome', EntryType.DIARY)
+        table.addEntry('Zome', DialogueData.EntryType.DIARY)
         table.addNode('Grulb')
         trag = self.data.addNode('Common1')
         trag.addEntry('Bop')

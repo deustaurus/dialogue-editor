@@ -74,8 +74,8 @@ class TextPanel:
             self.editpages.pop().destroy()
         self.lastentry = self.content.editEntry
         if self.lastentry:
-            for index in range(0, len(self.lastentry.pages)):
-                editpane = TextPage(self.lastentry.pages[index], index, self._rebuildContent, self.contentFrame)
+            for index in range(0, len(self.lastentry.getPages())):
+                editpane = TextPage(self.lastentry.getPages()[index], index, self._rebuildContent, self.contentFrame)
                 self.editpages.append(editpane)
         self._layoutPages()
 

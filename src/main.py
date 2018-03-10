@@ -22,6 +22,8 @@ class DialogueEditor:
         master.rowconfigure(1, weight=1)
         master.columnconfigure(0, weight=1)
 
+        # TODO top row of options for language mode / project wide settings
+
         self._setupMenuBar(master)
 
         self.content = DialogueContent()
@@ -77,20 +79,20 @@ class DialogueEditor:
             self.content.data.children = []
             for regionnode in root:
                 if regionnode.tag == 'region':
-                    region = regionnode.attrib['id']
-                    print(region)
+                    regionname = regionnode.attrib['id']
                     for linenode in regionnode:
                         lineid = linenode.attrib['id']
                         lineflag = linenode.attrib['flag']
                         entry = self.content.data.addEntryPath(lineid)
                         if lineflag == 'r':
                             entry.entrytype = EntryType.DIARY
+                        region = entry.getRegion(regionname)
+                        region.clearPages()
                         linetext = linenode.text.split('%r')
                         # Delete dummy page from the created node
-                        entry.pages = []
                         for line in linetext:
                             line = line.replace('\\n', '\n')
-                            page = entry.addPage()
+                            page = region.addPage()
                             page.content = line
             self.content.editEntry = None
             self.content.contentMutated()
