@@ -9,6 +9,7 @@ class DialogueContent:
 
     # Static
     region = 'en'
+    allregions = ['en']
 
     def __init__(self):
         # Editing Content
@@ -18,8 +19,8 @@ class DialogueContent:
 
         # Dummy Content
         self.data = DialogueData.Group('Content')
-        common = self.data.addNode('Common10')
-        common.addNode('Common10')
+        common = self.data.addGroup('Common10')
+        common.addGroup('Common10')
         common.addEntry('Chum')
         common.addEntry('Crum_1')
         common.addEntry('Crum_10')
@@ -28,19 +29,22 @@ class DialogueContent:
         common.addEntry('Crum_2')
         common.addEntry('Blum')
         common.addEntry('Cram', DialogueData.EntryType.DIARY)
-        table = common.addNode('Common 1')
+        table = common.addGroup('Common 1')
         table.addEntry('Zome', DialogueData.EntryType.DIARY)
-        table.addNode('Grulb')
-        trag = self.data.addNode('Common1')
+        table.addGroup('Grulb')
+        trag = self.data.addGroup('Common1')
         trag.addEntry('Bop')
         trag.addEntry('Lope')
-        bome = self.data.addNode('Common2')
+        bome = self.data.addGroup('Common2')
         bome.addEntry('Crunt')
-        bome.addNode('Crome')
+        bome.addGroup('Crome')
 
     def contentMutated(self):
         for func in self.mutateEvent:
             func()
 
     def getItemPathByString(self, string):
-        return self.data.findNode(string).getPath()
+        return self.data.findGroup(string).getPath()
+    
+    def clearRegions(self):
+        allregions = []

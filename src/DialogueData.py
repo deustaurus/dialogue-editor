@@ -2,8 +2,6 @@ from enum import Enum
 from natsort import natsort_keygen, ns
 from DialogueContent import DialogueContent
 
-# TODO add region
-
 class EntryType(Enum):
     NONE = 'Default'
     DIARY = 'Diary'
@@ -18,16 +16,16 @@ class Group:
     def addEntryPath(self, path):
         split = path.split('.')
         entryid = split.pop()
-        node = self
+        group = self
         while len(split) > 0:
-            node = self._findOrCreateNode(node, split.pop(0))
-        return node.addEntry(entryid)
+            group = self._findOrCreateGroup(group, split.pop(0))
+        return group.addEntry(entryid)
 
-    def _findOrCreateNode(self, node, id):
-        for child in node.children:
+    def _findOrCreateGroup(self, group, id):
+        for child in group.children:
             if child.id == id:
                 return child
-        return node.addNode(id)
+        return group.addGroup(id)
 
     def countChildren(self):
         # Pass num in an array so it's by ref
@@ -63,11 +61,11 @@ class Group:
         for child in self.children:
             child._addCountPages(num)
 
-    def addNode(self, id):
-        node = Group(id, self)
-        self.children.append(node)
-        self.sortNodes()
-        return node
+    def addGroup(self, id):
+        group = Group(id, self)
+        self.children.append(group)
+        self.sortGroups()
+        return group
     
     def addEntry(self, id, entrytype=EntryType.NONE):
         result = Entry(id, entrytype, self)
@@ -75,7 +73,7 @@ class Group:
         self.sortEntries()
         return result
     
-    def sortNodes(self):
+    def sortGroups(self):
         key = natsort_keygen(key=lambda x: x.id, alg=ns.IGNORECASE)
         self.children.sort(key=key)
 
@@ -98,13 +96,13 @@ class Group:
         return result
     
     # Only works when called from the root!
-    def findNode(self, path):
+    def findGroup(self, path):
         # If we're caling this from the root, looking for the root, you found it!
         if len(path) < 1:
             return self
-        return self._searchForNode(path.split('.'))
+        return self._searchForGroup(path.split('.'))
     
-    def _searchForNode(self, path):
+    def _searchForGroup(self, path):
         # If we found the end of the path
         if len(path) < 1:
             return self
@@ -112,17 +110,16 @@ class Group:
         # Search down the list
         for child in self.children:
             if child.id == section:
-                return child._searchForNode(path)
+                return child._searchForGroup(path)
         # If we don't have a child of that name, wefound the path
         return self
     
     def findEntry(self, path):
-        node = self.findNode(path)
+        group = self.findGroup(path)
         entryname = path.split('.').pop()
-        for entry in node.entries:
+        for entry in group.entries:
             if entry.id == entryname:
                 return entry
-        # This really shouldn't happen!
         return None
 
 class Entry:

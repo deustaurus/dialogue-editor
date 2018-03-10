@@ -5,6 +5,7 @@ from DialogueData import *
 from DialogueContent import DialogueContent
 from DialogueTree import DialogueTree
 from TextPanel import TextPanel
+from TopRowMenu import TopRowMenu
 from tkinter import filedialog
 import EntryDetails
 
@@ -28,6 +29,10 @@ class DialogueEditor:
 
         self.content = DialogueContent()
         self.content.mutateEvent.append(self.refreshViews)
+
+        topRowFrame = Frame(master, padx=5, pady=5)
+        topRowFrame.grid(row=0, column=0, sticky=NSEW)
+        self.toprow = TopRowMenu(topRowFrame)
 
         mainFrame = Frame(master)
         mainFrame.grid(row=1, column=0, sticky=NSEW)
@@ -75,11 +80,13 @@ class DialogueEditor:
 
     def parseFile(self, path):        
         root = xml.etree.ElementTree.parse(path).getroot()
+        self.content.clearRegions()
         if root.tag == 'data':
             self.content.data.children = []
             for regionnode in root:
                 if regionnode.tag == 'region':
                     regionname = regionnode.attrib['id']
+                    self.content.allregions.append(regionname)
                     for linenode in regionnode:
                         lineid = linenode.attrib['id']
                         lineflag = linenode.attrib['flag']
@@ -89,7 +96,7 @@ class DialogueEditor:
                         region = entry.getRegion(regionname)
                         region.clearPages()
                         linetext = linenode.text.split('%r')
-                        # Delete dummy page from the created node
+                        # Delete dummy page from the created group
                         for line in linetext:
                             line = line.replace('\\n', '\n')
                             page = region.addPage()
