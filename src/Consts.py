@@ -23,6 +23,13 @@ nameblacklistcsharp = [
     'virtual', 'void', 'volatile', 'where', 'while', 'yield',
 ]
 
+def validateName(name):
+    if len(name) < 1:
+        return ValidateResult.LENGTH
+    if name.lower() in nameblacklistcsharp:
+        return ValidateResult.RESERVED_NAME
+    return ValidateResult.SUCCESS
+
 class ValidateResult(Enum):
     SUCCESS = 0
     NAME_CONFLICT = 1

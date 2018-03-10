@@ -46,6 +46,7 @@ class TextPanel:
 
         self.editpages = []
         self.lastentry = None
+        self.lastregion = DialogueContent.region
         self.canvas.bind_all("<MouseWheel>", self._on_mousewheel)
 
     def _on_mousewheel(self, event):
@@ -62,7 +63,7 @@ class TextPanel:
         self._layoutPages()
 
     def refreshView(self):
-        if self.lastentry != self.content.editEntry:
+        if self.lastentry != self.content.editEntry or self.lastregion != DialogueContent.region:
             self._rebuildPage()
     
     def _rebuildContent(self):
@@ -73,6 +74,7 @@ class TextPanel:
         while len(self.editpages) > 0:
             self.editpages.pop().destroy()
         self.lastentry = self.content.editEntry
+        self.lastregion = DialogueContent.region
         if self.lastentry:
             for index in range(0, len(self.lastentry.getPages())):
                 editpane = TextPage(self.lastentry.getPages()[index], index, self._rebuildContent, self.contentFrame)

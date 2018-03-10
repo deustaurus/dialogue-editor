@@ -32,7 +32,7 @@ class DialogueEditor:
 
         topRowFrame = Frame(master, padx=5, pady=5)
         topRowFrame.grid(row=0, column=0, sticky=NSEW)
-        self.toprow = TopRowMenu(topRowFrame)
+        self.toprow = TopRowMenu(topRowFrame, self.content)
 
         mainFrame = Frame(master)
         mainFrame.grid(row=1, column=0, sticky=NSEW)

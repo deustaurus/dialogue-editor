@@ -5,7 +5,7 @@ from tkinter import ttk, messagebox
 from DialogueData import *
 from DialogueContent import DialogueContent
 from SimpleDialog import Dialog
-from Consts import nameblacklistcsharp, ValidateResult
+from Consts import nameblacklistcsharp, ValidateResult, validateName
 
 # TODO tag entries with color
 # TODO keyboard commands
@@ -89,24 +89,17 @@ class DialogueTree:
             newname = stripped + str(num)
         return newname
 
-    def _validateName(self, name):
-        if len(name) < 1:
-            return ValidateResult.LENGTH
-        if name in nameblacklistcsharp:
-            return ValidateResult.RESERVED_NAME
-        return ValidateResult.SUCCESS
-
     def _validateGroup(self, name):
         for group in self.verifygroup.children:
             if group.id == name:
                 return ValidateResult.NAME_CONFLICT
-        return self._validateName(name)
+        return validateName(name)
     
     def _validateEntry(self, name):
         for entry in self.verifygroup.entries:
             if entry.id == name:
                 return ValidateResult.NAME_CONFLICT
-        return self._validateName(name)
+        return validateName(name)
 
     def _actionNewGroup(self):
         self.verifygroup = self.content.data.findGroup(self.treeselection[0])
