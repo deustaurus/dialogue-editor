@@ -232,8 +232,8 @@ class PanelTree:
         self.popupmenu.entryconfig(6, state=ACTIVE) # Delete
         # Get information
         # self.tree.selection_set(iid)
-        self.treeselection = self._getItemValuesByTreeId(iid)
-        seltype = self.treeselection[3]
+        tempselect = self._getItemValuesByTreeId(iid)
+        seltype = tempselect[3]
         # Check information
         if seltype == 'root':
             # Root content can't be deleted, or have entries added
@@ -297,15 +297,17 @@ class PanelTree:
             movetype = self.treeselection[3]
             if movetype == 'group':
                 group = self.content.data.findGroup(self.treeselection[0])
-                # We can't drag a group inside itself, so welook up the verify group's parents
+                # We can't drag a group inside itself, so we look up the verify group's parents
                 parent = self.verifygroup.parent
                 while parent != None:
                     if parent == group:
+                        print('Cant drag inside')
                         self.tree.selection_set()
                         return
                     parent = parent.parent
                 # Check for name duplication in parent
                 if self._validateGroup(group.id) is not ValidateResult.SUCCESS:
+                    print('Failed validate')
                     self.tree.selection_set()
                     return
                 # Group move
@@ -324,11 +326,13 @@ class PanelTree:
                 parentpath = entry.parent.getPath()
             
             if parentpath == movepath or movepath == currentpath:
+                print('Path unmoved')
                 self.tree.selection_set()
                 return
             
             iid = self._findTreeIndexByPath(movepath)
             if iid:
+                print('Success!')
                 self.dragstate = DragState.SUCCESS
                 self.tree.selection_set(iid)
     
