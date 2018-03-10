@@ -42,7 +42,7 @@ class DialogueEditor:
         filemenu.add_command(label='Open Project')
         filemenu.add_command(label='Save Project')
         filemenu.add_separator()
-        filemenu.add_command(label='Import XML', command=self.openFile)
+        filemenu.add_command(label='Import XML', command=self.importFile)
         filemenu.add_command(label='Export XML')
         filemenu.add_separator()
         filemenu.add_command(label='Exit', command=master.quit)
@@ -63,12 +63,12 @@ class DialogueEditor:
         self.paneldetails.refreshView()
         self.toprow.refreshView()
     
-    def openFile(self):
+    def importFile(self):
         # TODO lots of logging and safety here
         pathdesktop = os.path.join(os.environ["HOMEPATH"], "Desktop")
         pathload = filedialog.askopenfilename(initialdir=pathdesktop, title='Import XML', filetypes=[("xml files","*.xml")])
         if pathload:
-            self.parseFile(pathload)
+            self.parseXml(pathload)
     
     def deleteRegion(self):
         if len(self.content.allregions) < 2:
@@ -82,7 +82,7 @@ class DialogueEditor:
             self.content.deleteRegion(Content.region)
             self.refreshViews()
 
-    def parseFile(self, path):        
+    def parseXml(self, path):        
         root = xml.etree.ElementTree.parse(path).getroot()
         self.content.clearRegions()
         if root.tag == 'data':

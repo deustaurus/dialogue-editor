@@ -7,8 +7,6 @@ from Content import Content
 from PopupDialog import PopupDialog
 from Consts import nameblacklistcsharp, ValidateResult, validateName
 
-# TODO fix drag and drop
-
 class DragState(Enum):
     NONE = 0
     DRAG = 1
@@ -301,13 +299,11 @@ class PanelTree:
                 parent = self.verifygroup.parent
                 while parent != None:
                     if parent == group:
-                        print('Cant drag inside')
                         self.tree.selection_set()
                         return
                     parent = parent.parent
                 # Check for name duplication in parent
                 if self._validateGroup(group.id) is not ValidateResult.SUCCESS:
-                    print('Failed validate')
                     self.tree.selection_set()
                     return
                 # Group move
@@ -326,13 +322,11 @@ class PanelTree:
                 parentpath = entry.parent.getPath()
             
             if parentpath == movepath or movepath == currentpath:
-                print('Path unmoved')
                 self.tree.selection_set()
                 return
             
             iid = self._findTreeIndexByPath(movepath)
             if iid:
-                print('Success!')
                 self.dragstate = DragState.SUCCESS
                 self.tree.selection_set(iid)
     
