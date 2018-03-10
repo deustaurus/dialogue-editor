@@ -136,6 +136,17 @@ class Group:
     def deleteRegion(self, region):
         for entry in self.entries:
             entry.deleteRegion(region)
+    
+    def allEntries(self):
+        res = []
+        self._addEntries(res)
+        return res
+    
+    def _addEntries(self, res):
+        for entry in self.entries:
+            res.append(entry)
+        for child in self.children:
+            child._addEntries(res)
 
 class Entry:
     def __init__(self, id, entrytype=EntryType, parent=Group):
@@ -162,6 +173,11 @@ class Entry:
     
     def deleteRegion(self, region):
         self._region.pop(region, None)
+    
+    def getExportFlag(self):
+        if self.entrytype == EntryType.DIARY:
+            return 'r'
+        return 'n'        
 
 class Region:
     def __init__(self, parent, id):
@@ -183,6 +199,21 @@ class Region:
     
     def clearPages(self):
         self._pages = []
+
+    def combinedPages(self):
+        res = ''
+        index = 0
+        for page in self._pages:
+            if len(page.content) < 1:
+                continue
+            if index > 0:
+                res += '%r' # Page split
+            val = page.content.rstrip()
+            val = val.replace('\n','\\n')
+            val = val.replace('\t','\\t')
+            res += val
+            index += 1
+        return res
 
 class Page:
     def __init__(self, parent=Region):

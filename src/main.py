@@ -7,10 +7,10 @@ from PanelTree import PanelTree
 from PanelText import PanelText
 from TopRowMenu import TopRowMenu
 from tkinter import filedialog, messagebox
+from FileWriter import FileWriter
 import PanelDetails
 
 # TODO project file, too for open / save
-# TODO export to xml
 # TODO keyboard commands
 # TODO undo tree?
 
@@ -24,6 +24,8 @@ class DialogueEditor:
         master.columnconfigure(1, weight=1)
 
         self._setupMenuBar(master)
+
+        self.writer = FileWriter()
 
         self.content = Content()
         self.content.mutateEvent.append(self.refreshViews)
@@ -43,7 +45,7 @@ class DialogueEditor:
         filemenu.add_command(label='Save Project')
         filemenu.add_separator()
         filemenu.add_command(label='Import XML', command=self.importFile)
-        filemenu.add_command(label='Export XML')
+        filemenu.add_command(label='Export XML', command=self.exportFile)
         filemenu.add_separator()
         filemenu.add_command(label='Exit', command=master.quit)
         menubar.add_cascade(label='File', menu=filemenu)
@@ -63,6 +65,27 @@ class DialogueEditor:
         self.paneldetails.refreshView()
         self.toprow.refreshView()
     
+    def exportFile(self):
+        pathdesktop = os.path.join(os.environ['HOMEPATH'], 'Desktop')
+        pathsave = filedialog.asksaveasfilename(initialdir=pathdesktop, title='Export XML', filetypes=[('xml fies', '*.xml')])
+        if pathsave:
+            file = open(pathsave, 'w')
+            if file:
+                allentries = self.content.data.allEntries()
+                self.writer.clear()
+                self.writer.writeLine(0, "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n")
+                self.writer.writeLine(0, "<data>")
+                for regionname in self.content.allregions:
+                    self.writer.writeLine(1, "<region id=\"" + regionname + "\">")
+                    for entry in allentries:
+                        region = entry.getRegion(regionname)
+                        self.writer.writeLine(2, "<line id=\"" + region.parent.getPath() + "\" flag=\"" + region.parent.getExportFlag() + "\"><![CDATA[" + region.combinedPages() + "]]></line>")
+                    self.writer.writeLine(1, "</region>")
+                self.writer.writeLine(0, "</data>")
+                
+                file.write(self.writer.getContent())
+                file.close()
+
     def importFile(self):
         # TODO lots of logging and safety here
         pathdesktop = os.path.join(os.environ["HOMEPATH"], "Desktop")
@@ -98,15 +121,15 @@ class DialogueEditor:
                         if lineflag == 'r':
                             entry.entrytype = EntryType.DIARY
                         region = entry.getRegion(regionname)
-                        region.clearPages()
-                        linetext = linenode.text.split('%r')
-                        # Delete dummy page from the created group
-                        for line in linetext:
-                            line = line.replace('\\n', '\n')
-                            page = region.addPage()
-                            page.content = line
+                        # Ignore empty nodes
+                        if linenode.text and len(linenode.text) > 0:
+                            region.clearPages()
+                            linetext = linenode.text.split('%r')
+                            for line in linetext:
+                                line = line.replace('\\n', '\n')
+                                page = region.addPage()
+                                page.content = line
             if Content.region not in self.content.allregions:
-                print('reset region')
                 Content.region = self.content.allregions[0]
             self.content.editEntry = None
             self.content.contentMutated()
