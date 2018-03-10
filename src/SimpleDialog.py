@@ -42,18 +42,18 @@ class Dialog(Toplevel):
     #
     # construction hooks
 
-    def entrychanged(self,sv):
-        self.updateValidation(sv.get())
+    def entrychanged(self, *args):
+        self.updateValidation(self.sv.get())
 
     def body(self, master, label, init):
         Label(master, text=label).grid(row=0)
 
-        sv = StringVar()
-        sv.trace('w', lambda name, index, mode, sv=sv: self.entrychanged(sv))
+        self.sv = StringVar()
+        self.sv.trace('w', self.entrychanged)
         vcmd = (self.register(self.inputvalidate),
             '%d', '%i', '%P', '%s', '%S', '%v', '%V', '%W'
         )
-        self.e1 = Entry(master, validate='key', validatecommand=vcmd, width=50, textvariable=sv)
+        self.e1 = Entry(master, validate='key', validatecommand=vcmd, width=50, textvariable=self.sv)
         self.e1.insert(END, init)
         self.e1.grid(row=0, column=1)
 

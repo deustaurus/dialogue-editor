@@ -11,20 +11,9 @@ class TextPanel:
         self.master = master
         self.content = content
 
-        # Take the right half of the window
-        panelFrame = Frame(master)
-        panelFrame.grid(row=0, column=1, sticky=NSEW)
-        panelFrame.columnconfigure(0, weight=1)
-        panelFrame.rowconfigure(1, weight=1)
-
-        # Frame for detail readouts
-        detailsFrame = Frame(panelFrame)
-        detailsFrame.grid(row=0, column=0, sticky=NSEW, padx=5, pady=5)
-        detailsFrame.columnconfigure(0, weight=1)
-
         # Frame for canvas
-        canvasFrame = Frame(panelFrame)
-        canvasFrame.grid(row=1, column=0, sticky=NSEW)
+        canvasFrame = Frame(master, padx=2, pady=2, borderwidth=1, relief=GROOVE)
+        canvasFrame.grid(row=0, column=1, sticky=NSEW, padx=2, pady=2)
         canvasFrame.rowconfigure(0, weight=1)
         canvasFrame.columnconfigure(0, weight=1)
 
@@ -55,25 +44,9 @@ class TextPanel:
         yscroll.grid(row=0, column=1, sticky=NS)
         self.canvas.create_window((0,0), window=self.contentFrame, anchor=NW)
 
-        # TODO Add detail labels here
-        self.labeltitle = Label(detailsFrame, text='')
-        self.labeltitle.grid(row=0, column=0, sticky=W)
-
-        buttonRow = Frame(detailsFrame)
-        buttonRow.grid(row=1, column=0, sticky=NSEW)
-
-        self.colorbuttons = []
-        self._addColorButton(buttonRow, 0, '#ff0000')
-        self._addColorButton(buttonRow, 1, '#00ff00')
-
         self.editpages = []
         self.lastentry = None
         self.canvas.bind_all("<MouseWheel>", self._on_mousewheel)
-
-    def _addColorButton(self, master, index, color):
-        button = Checkbutton(master, bg=color, activebackground=color)
-        button.grid(row=0, column=index, sticky=W, padx=3)
-        self.colorbuttons.append(button)
 
     def _on_mousewheel(self, event):
         widget = self.master.winfo_containing(event.x_root, event.y_root)
@@ -108,9 +81,7 @@ class TextPanel:
 
     def _layoutPages(self):
         if self.lastentry == None:
-            self.labeltitle.config(text='No Entry Selected')
             return
-        self.labeltitle.config(text='Entry: ' + self.lastentry.getPath())
 
         accumwidth = 0
         accumheight = self.panelwidgetheight

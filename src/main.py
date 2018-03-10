@@ -6,6 +6,7 @@ from DialogueContent import DialogueContent
 from DialogueTree import DialogueTree
 from TextPanel import TextPanel
 from tkinter import filedialog
+import EntryDetails
 
 # TODO project format save/load
 # TODO export to xml
@@ -17,13 +18,11 @@ class DialogueEditor:
         self.master = master
 
         master.title("Dialogue Editor")
-        master.geometry("800x600")
+        master.geometry("1024x768")
         master.rowconfigure(1, weight=1)
         master.columnconfigure(0, weight=1)
 
         self._setupMenuBar(master)
-
-        # TODO top bar with options
 
         self.content = DialogueContent()
         self.content.mutateEvent.append(self.refreshViews)
@@ -33,6 +32,7 @@ class DialogueEditor:
 
         self.treeview = DialogueTree(mainFrame,self.content)
         self.textpanel = TextPanel(mainFrame,self.content)
+        self.entrydetails = EntryDetails.EntryDetails(mainFrame, self.content)
         
         mainFrame.rowconfigure(0, weight=1)
         mainFrame.columnconfigure(1, weight=1)
@@ -62,6 +62,7 @@ class DialogueEditor:
     def refreshViews(self):
         self.treeview.refreshView()
         self.textpanel.refreshView()
+        self.entrydetails.refreshView()
     
     def openFile(self):
         # TODO lots of logging and safety here

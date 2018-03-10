@@ -30,7 +30,6 @@ class DialogueTree:
         
         topFrame = Frame(outerFrame, padx=5, pady=5)
         topFrame.grid(row=0, column=0, sticky=W)
-        self._createTopFrame(topFrame)
 
         treeFrame = Frame(outerFrame)
         treeFrame.grid(row=1, column=0, sticky=NSEW)
@@ -38,27 +37,7 @@ class DialogueTree:
         self._createTree(treeFrame)
         self._createRightClickMenu(outerFrame)
 
-    def _createTopFrame(self, master):
-        self.buttonNewGroup = Button(master, text='New Group', command=self._actionNewGroup)
-        self.buttonNewGroup.grid(row=0, column=0, padx=5, sticky=W)
-
-        self.buttonNewEntry = Button(master, text='New Entry', command=self._actionNewEntry)
-        self.buttonNewEntry.grid(row=0, column=1, padx=5, sticky=W)
-        
-        sep = ttk.Separator(master, orient=VERTICAL)
-        sep.grid(row=0, column=2, sticky=NS, padx=5, )
-
-        self.buttonDuplicate = Button(master, text='Duplicate', command=self._actionDuplicate)
-        self.buttonDuplicate.grid(row=0, column=3, padx=5, sticky=W)
-        
-        self.buttonRename = Button(master, text='Rename', command=self._actionRename)
-        self.buttonRename.grid(row=0, column=4, sticky=W, padx=5)
-
-        sep = ttk.Separator(master, orient=VERTICAL)
-        sep.grid(row=0, column=5, padx=5, sticky=NS)
-        
-        self.buttonDelete = Button(master, text='Delete', command=self._actionDelete)
-        self.buttonDelete.grid(row=0, column=6, sticky=W, padx=5)
+        self._setupButtons(None)
 
     def _createTree(self, master):
         dataCols = ('group', 'type', 'pages')
@@ -223,8 +202,7 @@ class DialogueTree:
 
     def _treeSelect(self, event):
         iid = self.tree.selection()
-        if iid:
-            self._setupButtons(iid[0])
+        self._setupButtons(iid)
 
     def _rightClickTree(self, event):
         # Clear any drag state
@@ -232,7 +210,6 @@ class DialogueTree:
         iid = self.tree.identify_row(event.y)
         if iid:
             try:
-                # self._setupButtons(iid)
                 self.tree.selection_set(iid)
                 self.popupmenu.tk_popup(event.x_root + 50, event.y_root + 10, 0)
             finally:
@@ -241,17 +218,19 @@ class DialogueTree:
             self.tree.selection_set()
     
     def _setupButtons(self, iid):
+        if not iid:
+            self.popupmenu.entryconfig(0, state=DISABLED) # New Group
+            self.popupmenu.entryconfig(1, state=DISABLED) # New Entry
+            self.popupmenu.entryconfig(2, state=DISABLED) # Duplicate
+            self.popupmenu.entryconfig(4, state=DISABLED) # Rename
+            self.popupmenu.entryconfig(6, state=DISABLED) # Delete
+            return
         # Default settings, group mode
         self.popupmenu.entryconfig(0, state=ACTIVE) # New Group
         self.popupmenu.entryconfig(1, state=ACTIVE) # New Entry
         self.popupmenu.entryconfig(2, state=ACTIVE) # Duplicate
         self.popupmenu.entryconfig(4, state=ACTIVE) # Rename
         self.popupmenu.entryconfig(6, state=ACTIVE) # Delete
-        self.buttonNewGroup.config(state=NORMAL)
-        self.buttonNewEntry.config(state=NORMAL)
-        self.buttonDuplicate.config(state=NORMAL)
-        self.buttonRename.config(state=NORMAL)
-        self.buttonDelete.config(state=NORMAL)
         # Get information
         # self.tree.selection_set(iid)
         self.treeselection = self._getItemValuesByTreeId(iid)
@@ -263,18 +242,11 @@ class DialogueTree:
             self.popupmenu.entryconfig(2, state=DISABLED) # Duplicate
             self.popupmenu.entryconfig(4, state=DISABLED) # Rename
             self.popupmenu.entryconfig(6, state=DISABLED) # Delete
-            self.buttonNewEntry.config(state=DISABLED)
-            self.buttonDuplicate.config(state=DISABLED)
-            self.buttonRename.config(state=DISABLED)
-            self.buttonDelete.config(state=DISABLED)
         elif seltype == 'empty':
             # You can't delete an empty object
             self.popupmenu.entryconfig(2, state=DISABLED) # Duplicate
             self.popupmenu.entryconfig(4, state=DISABLED) # Rename
             self.popupmenu.entryconfig(6, state=DISABLED) # Delete
-            self.buttonDuplicate.config(state=DISABLED)
-            self.buttonRename.config(state=DISABLED)
-            self.buttonDelete.config(state=DISABLED)
 
     def _leftClickTree(self, event):
         iid = self.tree.identify_row(event.y)
@@ -433,3 +405,4 @@ class DialogueTree:
     
     def refreshView(self):
         self._populateTreeRoot()
+        self._setupButtons(self.tree.selection())
