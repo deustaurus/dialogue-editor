@@ -12,7 +12,8 @@ class EntryDetails:
 
         labels = Frame(frame)
         labels.grid(row=0, column=0, sticky=NSEW)
-        self.labeltitle = Label(labels, text='')
+        
+        self.labeltitle = Label(labels, text='', wraplength=230, justify=LEFT)
         self.labeltitle.grid(row=0, column=0, sticky=W)
 
         sep = ttk.Separator(frame)
@@ -41,4 +42,4 @@ class EntryDetails:
         if self.lastentry == None:
             self.labeltitle.config(text='No Entry Selected')
             return
-        self.labeltitle.config(text='Entry: ' + self.lastentry.getPath())
+        self.labeltitle.config(text='Entry:\n' + self.lastentry.getPath())

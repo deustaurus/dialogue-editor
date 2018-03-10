@@ -9,13 +9,13 @@ class DialogueContent:
 
     # Static
     region = 'en'
-    allregions = ['en']
 
     def __init__(self):
         # Editing Content
         self.editEntry = None
 
         self.mutateEvent = []
+        self.allregions = ['en']
 
         # Dummy Content
         self.data = DialogueData.Group('Content')
@@ -47,4 +47,4 @@ class DialogueContent:
         return self.data.findGroup(string).getPath()
     
     def clearRegions(self):
-        allregions = []
+        self.allregions = []

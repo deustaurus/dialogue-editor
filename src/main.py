@@ -70,6 +70,7 @@ class DialogueEditor:
         self.treeview.refreshView()
         self.textpanel.refreshView()
         self.entrydetails.refreshView()
+        self.toprow.refreshView()
     
     def openFile(self):
         # TODO lots of logging and safety here
@@ -101,6 +102,9 @@ class DialogueEditor:
                             line = line.replace('\\n', '\n')
                             page = region.addPage()
                             page.content = line
+            if DialogueContent.region not in self.content.allregions:
+                print('reset region')
+                DialogueContent.region = self.content.allregions[0]
             self.content.editEntry = None
             self.content.contentMutated()
 
