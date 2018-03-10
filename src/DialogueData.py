@@ -1,6 +1,6 @@
 from enum import Enum
 from natsort import natsort_keygen, ns
-from DialogueContent import DialogueContent
+from Content import Content
 
 class EntryType(Enum):
     NONE = 'Default'
@@ -143,10 +143,10 @@ class Entry:
         return self._region[id]
 
     def addPage(self, index=None):
-        return self.getRegion(DialogueContent.region).addPage(index)
+        return self.getRegion(Content.region).addPage(index)
     
     def getPages(self):
-        return self.getRegion(DialogueContent.region).getPages()
+        return self.getRegion(Content.region).getPages()
     
     def deleteRegion(self, region):
         self._region.pop(region, None)

@@ -5,7 +5,7 @@ import DialogueData
 # TODO undo tree?
 # TODO modified flags
 
-class DialogueContent:
+class Content:
 
     # Static
     region = 'en'
@@ -51,5 +51,5 @@ class DialogueContent:
 
     def deleteRegion(self, regionid):
         self.allregions.remove(regionid)
-        DialogueContent.region = self.allregions[0]
+        Content.region = self.allregions[0]
         self.data.deleteRegion(regionid)

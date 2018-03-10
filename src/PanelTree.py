@@ -3,8 +3,8 @@ from enum import Enum
 from tkinter import *
 from tkinter import ttk, messagebox
 from DialogueData import *
-from DialogueContent import DialogueContent
-from SimpleDialog import Dialog
+from Content import Content
+from PopupDialog import PopupDialog
 from Consts import nameblacklistcsharp, ValidateResult, validateName
 
 # TODO tag entries with color
@@ -15,8 +15,8 @@ class DragState(Enum):
     DRAG = 1
     SUCCESS = 2
 
-class DialogueTree:
-    def __init__(self, master, content=DialogueContent):
+class PanelTree:
+    def __init__(self, master, content=Content):
         self.master = master
         self.content = content
 
@@ -103,7 +103,7 @@ class DialogueTree:
 
     def _actionNewGroup(self):
         self.verifygroup = self.content.data.findGroup(self.treeselection[0])
-        popup = Dialog(self.master, "New Group", validate=self._validateGroup)
+        popup = PopupDialog(self.master, "New Group", validate=self._validateGroup)
         if popup.result:
             result = self.verifygroup.addGroup(popup.result)
             self.content.contentMutated()
@@ -116,7 +116,7 @@ class DialogueTree:
     
     def _actionNewEntry(self):
         self.verifygroup = self.content.data.findGroup(self.treeselection[0])
-        popup = Dialog(self.master, "New Entry", validate=self._validateEntry)
+        popup = PopupDialog(self.master, "New Entry", validate=self._validateEntry)
         if popup.result:
             entry = self.verifygroup.addEntry(popup.result)
             self.content.editEntry = entry
@@ -133,7 +133,7 @@ class DialogueTree:
         if renametype == 'group':
             group = self.content.data.findGroup(self.treeselection[0])
             self.verifygroup = group.parent
-            popup = Dialog(self.master, 'Rename Group', inittext=group.id, validate=self._validateGroup)
+            popup = PopupDialog(self.master, 'Rename Group', inittext=group.id, validate=self._validateGroup)
             if popup.result:
                 openstate = self.tree.item(self.tree.selection())['open']
                 group.id = popup.result
@@ -146,7 +146,7 @@ class DialogueTree:
         elif renametype == 'entry':
             entry = self.content.data.findEntry(self.treeselection[0])
             self.verifygroup = entry.parent
-            popup = Dialog(self.master, 'Rename Entry', inittext=entry.id, validate=self._validateEntry)
+            popup = PopupDialog(self.master, 'Rename Entry', inittext=entry.id, validate=self._validateEntry)
             if popup.result:
                 entry.id = popup.result
                 entry.parent.sortEntries()

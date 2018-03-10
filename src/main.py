@@ -2,12 +2,12 @@ import os
 import xml.etree.ElementTree
 from tkinter import *
 from DialogueData import *
-from DialogueContent import DialogueContent
-from DialogueTree import DialogueTree
-from TextPanel import TextPanel
+from Content import Content
+from PanelTree import PanelTree
+from PanelText import PanelText
 from TopRowMenu import TopRowMenu
 from tkinter import filedialog, messagebox
-import EntryDetails
+import PanelDetails
 
 # TODO project file, too for open / save
 # TODO export to xml
@@ -23,7 +23,7 @@ class DialogueEditor:
 
         self._setupMenuBar(master)
 
-        self.content = DialogueContent()
+        self.content = Content()
         self.content.mutateEvent.append(self.refreshViews)
 
         topRowFrame = Frame(master, padx=5, pady=5)
@@ -33,9 +33,9 @@ class DialogueEditor:
         mainFrame = Frame(master)
         mainFrame.grid(row=1, column=0, sticky=NSEW)
 
-        self.treeview = DialogueTree(mainFrame,self.content)
-        self.textpanel = TextPanel(mainFrame,self.content)
-        self.entrydetails = EntryDetails.EntryDetails(mainFrame, self.content)
+        self.paneltree = PanelTree(mainFrame,self.content)
+        self.paneltext = PanelText(mainFrame,self.content)
+        self.paneldetails = PanelDetails.PanelDetails(mainFrame, self.content)
         
         mainFrame.rowconfigure(0, weight=1)
         mainFrame.columnconfigure(1, weight=1)
@@ -65,9 +65,9 @@ class DialogueEditor:
         master.config(menu=menubar)
 
     def refreshViews(self):
-        self.treeview.refreshView()
-        self.textpanel.refreshView()
-        self.entrydetails.refreshView()
+        self.paneltree.refreshView()
+        self.paneltext.refreshView()
+        self.paneldetails.refreshView()
         self.toprow.refreshView()
     
     def openFile(self):
@@ -83,10 +83,10 @@ class DialogueEditor:
             return
         if messagebox.askyesno(
             'Delete Region?', 
-            'Are you sure you want to delete the region named \'' + DialogueContent.region + '\'?',
+            'Are you sure you want to delete the region named \'' + Content.region + '\'?',
             default=messagebox.NO
         ):
-            self.content.deleteRegion(DialogueContent.region)
+            self.content.deleteRegion(Content.region)
             self.refreshViews()
 
     def parseFile(self, path):        
@@ -112,9 +112,9 @@ class DialogueEditor:
                             line = line.replace('\\n', '\n')
                             page = region.addPage()
                             page.content = line
-            if DialogueContent.region not in self.content.allregions:
+            if Content.region not in self.content.allregions:
                 print('reset region')
-                DialogueContent.region = self.content.allregions[0]
+                Content.region = self.content.allregions[0]
             self.content.editEntry = None
             self.content.contentMutated()
 

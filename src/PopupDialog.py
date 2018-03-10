@@ -1,7 +1,7 @@
 from tkinter import *
 from Consts import ValidateResult
 
-class Dialog(Toplevel):
+class PopupDialog(Toplevel):
     def __init__( self,  parent, title=None, label='Name:', inittext='', validate=None ):
         Toplevel.__init__(self, parent)
         self.transient(parent)

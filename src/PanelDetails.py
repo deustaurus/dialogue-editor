@@ -1,7 +1,7 @@
 from tkinter import *
 from tkinter import ttk
 
-class EntryDetails:
+class PanelDetails:
     def __init__(self, master, content):
         self.content = content
 

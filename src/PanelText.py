@@ -1,13 +1,13 @@
 import math
 from tkinter import *
 from tkinter import ttk
-from DialogueContent import DialogueContent
+from Content import Content
 from TextModified import TextModified
 from enum import Enum
 from TextPage import TextPage
 
-class TextPanel:
-    def __init__(self, master, content=DialogueContent):
+class PanelText:
+    def __init__(self, master, content=Content):
         self.master = master
         self.content = content
 
@@ -46,7 +46,7 @@ class TextPanel:
 
         self.editpages = []
         self.lastentry = None
-        self.lastregion = DialogueContent.region
+        self.lastregion = Content.region
         self.canvas.bind_all("<MouseWheel>", self._on_mousewheel)
 
     def _on_mousewheel(self, event):
@@ -63,7 +63,7 @@ class TextPanel:
         self._layoutPages()
 
     def refreshView(self):
-        if self.lastentry != self.content.editEntry or self.lastregion != DialogueContent.region:
+        if self.lastentry != self.content.editEntry or self.lastregion != Content.region:
             self._rebuildPage()
     
     def _rebuildContent(self):
@@ -74,7 +74,7 @@ class TextPanel:
         while len(self.editpages) > 0:
             self.editpages.pop().destroy()
         self.lastentry = self.content.editEntry
-        self.lastregion = DialogueContent.region
+        self.lastregion = Content.region
         if self.lastentry:
             for index in range(0, len(self.lastentry.getPages())):
                 editpane = TextPage(self.lastentry.getPages()[index], index, self._rebuildContent, self.contentFrame)

@@ -1,17 +1,17 @@
 from tkinter import *
-from DialogueContent import DialogueContent
-from SimpleDialog import Dialog
+from Content import Content
+from PopupDialog import PopupDialog
 from Consts import ValidateResult, nameblacklistcsharp, validateName
 
 newid = '[New]'
 
 class TopRowMenu:
-    def __init__(self, master, content=DialogueContent):
+    def __init__(self, master, content=Content):
         self.master = master
         self.content = content
 
         self.regionstring = StringVar()
-        self.regionstring.set(DialogueContent.region)
+        self.regionstring.set(Content.region)
 
         label = Label(master, text='Region:')
         label.grid(row=0, column=0, sticky=E)
@@ -20,7 +20,7 @@ class TopRowMenu:
         self._rebuildOptions()
     
     def refreshView(self):
-        self.regionstring.set(DialogueContent.region)
+        self.regionstring.set(Content.region)
         self._rebuildOptions()
     
     def _rebuildOptions(self):
@@ -33,17 +33,17 @@ class TopRowMenu:
     
     def _selectRegion(self, region):
         if region == newid:
-            self.regionstring.set(DialogueContent.region)
-            popup = Dialog(self.master, title='New Region Id', label='Id:', validate=self._validateRegion)
+            self.regionstring.set(Content.region)
+            popup = PopupDialog(self.master, title='New Region Id', label='Id:', validate=self._validateRegion)
             if popup.result:
-                DialogueContent.region = popup.result
+                Content.region = popup.result
                 self.content.allregions.append(popup.result)                
-                self.regionstring.set(DialogueContent.region)
+                self.regionstring.set(Content.region)
                 self._rebuildOptions()
                 self.content.contentMutated()
             return
-        if region != DialogueContent.region:
-            DialogueContent.region = region
+        if region != Content.region:
+            Content.region = region
             self.content.contentMutated()
 
     def _validateRegion(self, name):
