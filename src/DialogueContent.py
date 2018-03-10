@@ -48,3 +48,8 @@ class DialogueContent:
     
     def clearRegions(self):
         self.allregions = []
+
+    def deleteRegion(self, regionid):
+        self.allregions.remove(regionid)
+        DialogueContent.region = self.allregions[0]
+        self.data.deleteRegion(regionid)

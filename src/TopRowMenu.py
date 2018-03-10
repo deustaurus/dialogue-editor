@@ -3,8 +3,6 @@ from DialogueContent import DialogueContent
 from SimpleDialog import Dialog
 from Consts import ValidateResult, nameblacklistcsharp, validateName
 
-# TODO delete region
-
 newid = '[New]'
 
 class TopRowMenu:

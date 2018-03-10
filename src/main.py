@@ -6,7 +6,7 @@ from DialogueContent import DialogueContent
 from DialogueTree import DialogueTree
 from TextPanel import TextPanel
 from TopRowMenu import TopRowMenu
-from tkinter import filedialog
+from tkinter import filedialog, messagebox
 import EntryDetails
 
 # TODO project file, too for open / save
@@ -46,19 +46,21 @@ class DialogueEditor:
         menubar = Menu(master)
 
         filemenu = Menu(menubar, tearoff=0)
-        filemenu.add_command(label="Open Project")
-        filemenu.add_command(label="Save Project")
+        filemenu.add_command(label='Open Project')
+        filemenu.add_command(label='Save Project')
         filemenu.add_separator()
         filemenu.add_command(label='Import XML', command=self.openFile)
         filemenu.add_command(label='Export XML')
         filemenu.add_separator()
-        filemenu.add_command(label="Exit", command=master.quit)
-        menubar.add_cascade(label="File", menu=filemenu)
+        filemenu.add_command(label='Exit', command=master.quit)
+        menubar.add_cascade(label='File', menu=filemenu)
 
         editmenu = Menu(menubar, tearoff=0)
-        editmenu.add_command(label="Undo")
-        editmenu.add_command(label="Redo")
-        menubar.add_cascade(label="Edit", menu=editmenu)
+        editmenu.add_command(label='Undo')
+        editmenu.add_command(label='Redo')
+        editmenu.add_separator()
+        editmenu.add_command(label='Delete Region', command=self.deleteRegion)
+        menubar.add_cascade(label='Edit', menu=editmenu)
 
         master.config(menu=menubar)
 
@@ -74,6 +76,18 @@ class DialogueEditor:
         pathload = filedialog.askopenfilename(initialdir=pathdesktop, title='Import XML', filetypes=[("xml files","*.xml")])
         if pathload:
             self.parseFile(pathload)
+    
+    def deleteRegion(self):
+        if len(self.content.allregions) < 2:
+            messagebox.showwarning(title='Delete Region', message='Can\'t delete the last region.')
+            return
+        if messagebox.askyesno(
+            'Delete Region?', 
+            'Are you sure you want to delete the region named \'' + DialogueContent.region + '\'?',
+            default=messagebox.NO
+        ):
+            self.content.deleteRegion(DialogueContent.region)
+            self.refreshViews()
 
     def parseFile(self, path):        
         root = xml.etree.ElementTree.parse(path).getroot()

@@ -122,6 +122,10 @@ class Group:
                 return entry
         return None
 
+    def deleteRegion(self, region):
+        for entry in self.entries:
+            entry.deleteRegion(region)
+
 class Entry:
     def __init__(self, id, entrytype=EntryType, parent=Group):
         self.id = id
@@ -143,6 +147,9 @@ class Entry:
     
     def getPages(self):
         return self.getRegion(DialogueContent.region).getPages()
+    
+    def deleteRegion(self, region):
+        self._region.pop(region, None)
 
 class Region:
     def __init__(self, parent, id):
