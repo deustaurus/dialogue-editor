@@ -6,6 +6,15 @@ class EntryType(Enum):
     NONE = 'Default'
     DIARY = 'Diary'
 
+class EntryColors(Enum):
+    DEFAULT = 'default'
+    RED = '#ff8080',
+    GREEN = '#63ff53',
+    BLUE = '#8d9dff',
+    YELLOW = '#fff94e'
+    ORANGE = '#ff954e'
+    BROWN = '#c98151'
+
 class Group:
     def __init__(self, id, parent=None):
         self.id = id
@@ -131,6 +140,7 @@ class Entry:
         self.id = id
         self.parent = parent
         self.entrytype = entrytype
+        self.entrycolor = EntryColors.DEFAULT
         self._region = {}
         self.getRegion('en')
     

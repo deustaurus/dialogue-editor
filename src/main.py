@@ -19,26 +19,17 @@ class DialogueEditor:
         master.title("Dialogue Editor")
         master.geometry("1024x768")
         master.rowconfigure(1, weight=1)
-        master.columnconfigure(0, weight=1)
+        master.columnconfigure(1, weight=1)
 
         self._setupMenuBar(master)
 
         self.content = Content()
         self.content.mutateEvent.append(self.refreshViews)
 
-        topRowFrame = Frame(master, padx=5, pady=5)
-        topRowFrame.grid(row=0, column=0, sticky=NSEW)
-        self.toprow = TopRowMenu(topRowFrame, self.content)
-
-        mainFrame = Frame(master)
-        mainFrame.grid(row=1, column=0, sticky=NSEW)
-
-        self.paneltree = PanelTree(mainFrame,self.content)
-        self.paneltext = PanelText(mainFrame,self.content)
-        self.paneldetails = PanelDetails.PanelDetails(mainFrame, self.content)
-        
-        mainFrame.rowconfigure(0, weight=1)
-        mainFrame.columnconfigure(1, weight=1)
+        self.toprow = TopRowMenu(master, self.content)
+        self.paneltree = PanelTree(master, self.content)
+        self.paneltext = PanelText(master, self.content)
+        self.paneldetails = PanelDetails.PanelDetails(master, self.content)
 
         self.refreshViews()
 

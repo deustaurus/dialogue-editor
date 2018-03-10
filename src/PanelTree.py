@@ -25,7 +25,7 @@ class PanelTree:
         self.verifygroup = None
 
         outerFrame = Frame(master)
-        outerFrame.grid(row=0, column=0, sticky=NSEW)
+        outerFrame.grid(row=1, column=0, sticky=NSEW)
         outerFrame.columnconfigure(0, weight=1)
         outerFrame.rowconfigure(1, weight=1)
         

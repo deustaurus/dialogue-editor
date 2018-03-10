@@ -1,45 +1,96 @@
 from tkinter import *
 from tkinter import ttk
+from DialogueData import EntryType, EntryColors
+from Content import Content
+
+# TODO Entry type dropdown
 
 class PanelDetails:
-    def __init__(self, master, content):
+    def __init__(self, master, content=Content):
         self.content = content
 
-        frame = Frame(master, width=240, relief=GROOVE, borderwidth=1, padx=2, pady=2)
+        frame = Frame(master, width=240, padx=2)
         frame.grid_propagate(False)
-        frame.grid(row=0, column=2, sticky=NSEW, padx=2, pady=2)
+        frame.grid(row=1, column=2, sticky=NSEW, padx=2, pady=2)
         frame.columnconfigure(0, weight=1)
 
-        labels = Frame(frame)
-        labels.grid(row=0, column=0, sticky=NSEW)
-        
-        self.labeltitle = Label(labels, text='', wraplength=230, justify=LEFT)
-        self.labeltitle.grid(row=0, column=0, sticky=W)
+        typeframe = Frame(frame, relief=GROOVE, borderwidth=1, padx=2, pady=2)
+        typeframe.grid(row=0, column=0, sticky=NSEW)
+        label = Label(typeframe, text='Entry Type')
+        label.grid(row=0, column=0, sticky=W)
 
-        sep = ttk.Separator(frame)
-        sep.grid(row=1, column=0, sticky=EW)
+        buttonframe = Frame(typeframe, padx=5, pady=5)
+        buttonframe.grid(row=1, column=0, sticky=NSEW)
+        self.typebuttons = []
+        self.typevar = StringVar()
+        self.typevar.set(EntryType.NONE.name)
+        self.typevar.trace('w', self._typeChanged)
 
-        buttons = Frame(frame, padx=5, pady=5)
-        buttons.grid(row=2, column=0, sticky=NSEW)
+        index = 0
+        for et in EntryType:
+            self._addEntryTypeButton(buttonframe, index, et)
+            index += 1
+
+        colorframe = Frame(frame, relief=GROOVE, borderwidth=1, padx=2, pady=2)
+        colorframe.grid(row=1, column=0, sticky=NSEW, pady=3)
+        label = Label(colorframe, text='Highlight Color')
+        label.grid(row=0, column=0, sticky=W)
+
+        buttonframe = Frame(colorframe, padx=5, pady=5)
+        buttonframe.grid(row=1, column=0, sticky=NSEW)
         self.colorbuttons = []
-        self._addColorButton(buttons, 0, '#ff0000')
-        self._addColorButton(buttons, 1, '#00ff00')
+        self.colorvar = StringVar()
+        self.colorvar.set(EntryColors.DEFAULT.name)
+        self.colorvar.trace('w', self._colorChanged)
 
-        self.lastentry = None
+        index = 0
+        for color in EntryColors:
+            self._addColorButton(buttonframe, index, color)
+            index += 1
+
+        self.lastentry = self.content.editEntry
         self._rebuildPage()
     
+    def _typeChanged(self, *args):
+        newtype = EntryType[self.typevar.get()]
+        if self.content.editEntry.entrytype != newtype:
+            self.content.editEntry.entrytype = newtype
+            self.content.contentMutated()
+            print('Change Type: ' + self.typevar.get())
+
+    def _addEntryTypeButton(self, master, index, et):
+        button = Radiobutton(master, text=et.value, variable=self.typevar, value=et.name)
+        button.grid(row=index, column=0, sticky=W)
+        self.typebuttons.append(button)
+
+    def _colorChanged(self, *args):
+        print('Change Color: ' + self.colorvar.get())
+    
     def _addColorButton(self, master, index, color):
-        button = Checkbutton(master, bg=color, activebackground=color)
-        button.grid(row=index, column=0, sticky=W, padx=3)
+        if color == EntryColors.DEFAULT:
+            button = Radiobutton(master, text='None', variable=self.colorvar, value=color.name)
+        else:
+            button = Radiobutton(master, bg=color.value, activebackground=color.value, variable=self.colorvar, value=color.name, width=10, anchor=W)
+        button.grid(row=index, column=0, sticky=W)
         self.colorbuttons.append(button)
 
     def refreshView(self):
         if self.lastentry != self.content.editEntry:
+            self.lastentry = self.content.editEntry
             self._rebuildPage()
     
     def _rebuildPage(self):
-        self.lastentry = self.content.editEntry
         if self.lastentry == None:
-            self.labeltitle.config(text='No Entry Selected')
-            return
-        self.labeltitle.config(text='Entry:\n' + self.lastentry.getPath())
+            self.typevar.set(' ')
+            self.colorvar.set(' ')
+            for button in self.typebuttons:
+                button.config(state=DISABLED)
+            for button in self.colorbuttons:
+                button.config(state=DISABLED)
+        else:
+            self.typevar.set(self.lastentry.entrytype.name)
+            self.colorvar.set(EntryColors.DEFAULT.name)
+            for button in self.typebuttons:
+                button.config(state=ACTIVE)
+            for button in self.colorbuttons:
+                button.config(state=ACTIVE)

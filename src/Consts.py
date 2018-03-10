@@ -35,8 +35,3 @@ class ValidateResult(Enum):
     NAME_CONFLICT = 1
     RESERVED_NAME = 2
     LENGTH = 3
-
-class EntryColors(Enum):
-    RED = 'Red',
-    BLUE = 'Blue',
-    GREEN = 'Green',

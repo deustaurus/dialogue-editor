@@ -13,7 +13,7 @@ class PanelText:
 
         # Frame for canvas
         canvasFrame = Frame(master, padx=2, pady=2, borderwidth=1, relief=GROOVE)
-        canvasFrame.grid(row=0, column=1, sticky=NSEW, padx=2, pady=2)
+        canvasFrame.grid(row=1, column=1, sticky=NSEW, padx=2, pady=2)
         canvasFrame.rowconfigure(0, weight=1)
         canvasFrame.columnconfigure(0, weight=1)
 
