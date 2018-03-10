@@ -176,9 +176,11 @@ class DialogueTree:
             entry = self.content.data.findEntry(self.treeselection[0])
             if messagebox.askyesno(
                 'Delete Entry?',
-                'Are you sure you want to delete \"' + entry.id + '\"?\n\n' + str(len(entry.pages)) + ' page(s) will be deleted.',
+                'Are you sure you want to delete \"' + entry.id + '\"?\n\n' + str(len(entry.getPages())) + ' page(s) will be deleted.',
                 default=messagebox.NO
             ):
+                if self.content.editEntry == entry:
+                    self.content.editEntry = None
                 entry.parent.entries.remove(entry)
         self.content.contentMutated()
     

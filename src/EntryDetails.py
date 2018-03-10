@@ -19,7 +19,7 @@ class EntryDetails:
         sep = ttk.Separator(frame)
         sep.grid(row=1, column=0, sticky=EW)
 
-        buttons = Frame(frame)
+        buttons = Frame(frame, padx=5, pady=5)
         buttons.grid(row=2, column=0, sticky=NSEW)
         self.colorbuttons = []
         self._addColorButton(buttons, 0, '#ff0000')

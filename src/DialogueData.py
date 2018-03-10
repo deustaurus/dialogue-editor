@@ -57,7 +57,7 @@ class Group:
     
     def _addCountPages(self, num):
         for entry in self.entries:
-            num[0] += len(entry.pages)
+            num[0] += len(entry.getPages())
         for child in self.children:
             child._addCountPages(num)
 

@@ -9,10 +9,8 @@ from TopRowMenu import TopRowMenu
 from tkinter import filedialog
 import EntryDetails
 
-# TODO project format save/load
-# TODO export to xml
-# TODO language modes?
 # TODO project file, too for open / save
+# TODO export to xml
 
 class DialogueEditor:
     def __init__(self, master):
@@ -22,8 +20,6 @@ class DialogueEditor:
         master.geometry("1024x768")
         master.rowconfigure(1, weight=1)
         master.columnconfigure(0, weight=1)
-
-        # TODO top row of options for language mode / project wide settings
 
         self._setupMenuBar(master)
 

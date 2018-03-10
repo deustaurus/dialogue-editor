@@ -2,6 +2,7 @@ import tkinter
 from tkinter import *
 from tkinter import messagebox
 from TextModified import TextModified
+from DialogueData import Page
 
 # TODO Text box right click
 # TODO Text box copy paste
@@ -57,7 +58,7 @@ class TextPage(tkinter.Frame):
             self.detaillabel.config(text='Page ' + str(self.index + 1) + '\tChars: ' + str(len(self.page.content.rstrip())))
     
     def _deletePage(self):
-        if len(self.page.parent.pages) < 2:
+        if len(self.page.parent.getPages()) < 2:
             # We can't delete the last page
             return
         text = 'Text: [Empty]'
@@ -65,10 +66,10 @@ class TextPage(tkinter.Frame):
             text = 'Text: \"' + self.page.content + '\"'
         if messagebox.askyesno(
                 'Delete Page?', 
-                'Are you sure you want to delete page ' + str(self.index + 1) + ' from entry \"' + self.page.parent.getPath() + '\"?\n\n' + text,
+                'Are you sure you want to delete page ' + str(self.index + 1) + ' from entry \"' + self.page.parent.parent.getPath() + '\"?\n\n' + text,
                 default=messagebox.NO
             ):
-                self.page.parent.pages.pop(self.index)
+                self.page.parent.getPages().pop(self.index)
                 self.rebuildcommand()
 
     def _addPageLeft(self):
