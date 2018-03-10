@@ -52,11 +52,12 @@ class PanelDetails:
         self._rebuildPage()
     
     def _typeChanged(self, *args):
+        if self.typevar.get() == ' ':
+            return
         newtype = EntryType[self.typevar.get()]
-        if self.content.editEntry.entrytype != newtype:
-            self.content.editEntry.entrytype = newtype
+        if self.lastentry.entrytype != newtype:
+            self.lastentry.entrytype = newtype
             self.content.contentMutated()
-            print('Change Type: ' + self.typevar.get())
 
     def _addEntryTypeButton(self, master, index, et):
         button = Radiobutton(master, text=et.value, variable=self.typevar, value=et.name)
@@ -64,7 +65,12 @@ class PanelDetails:
         self.typebuttons.append(button)
 
     def _colorChanged(self, *args):
-        print('Change Color: ' + self.colorvar.get())
+        if self.colorvar.get() == ' ':
+            return
+        newtype = EntryColors[self.colorvar.get()]
+        if self.lastentry.entrycolor != newtype:
+            self.lastentry.entrycolor = newtype
+            self.content.contentMutated()
     
     def _addColorButton(self, master, index, color):
         if color == EntryColors.DEFAULT:
@@ -89,8 +95,8 @@ class PanelDetails:
                 button.config(state=DISABLED)
         else:
             self.typevar.set(self.lastentry.entrytype.name)
-            self.colorvar.set(EntryColors.DEFAULT.name)
+            self.colorvar.set(self.lastentry.entrycolor.name)
             for button in self.typebuttons:
-                button.config(state=ACTIVE)
+                button.config(state=NORMAL)
             for button in self.colorbuttons:
-                button.config(state=ACTIVE)
+                button.config(state=NORMAL)
