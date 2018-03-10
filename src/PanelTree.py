@@ -7,8 +7,7 @@ from Content import Content
 from PopupDialog import PopupDialog
 from Consts import nameblacklistcsharp, ValidateResult, validateName
 
-# TODO tag entries with color
-# TODO keyboard commands
+# TODO fix drag and drop
 
 class DragState(Enum):
     NONE = 0
@@ -43,6 +42,10 @@ class PanelTree:
     def _createTree(self, master):
         dataCols = ('group', 'type', 'pages')
         self.tree = ttk.Treeview(columns=dataCols, displaycolumns=['type','pages'], selectmode='browse')
+        for color in EntryColors:
+            if color == EntryColors.DEFAULT:
+                continue
+            self.tree.tag_configure(color.name, background=color.value)
         yscroll = ttk.Scrollbar(orient=VERTICAL, command=self.tree.yview)
         self.tree['yscroll'] = yscroll.set
 
@@ -391,7 +394,16 @@ class PanelTree:
         treegroup = self.tree.insert(tree, END, text=group.id, values=[group.getPath(), '', '', grouptype])
         # Show Entries
         for entry in group.entries:
-            self.tree.insert(treegroup, END, text=entry.id, values=[entry.getPath(), entry.entrytype.value, len(entry.getPages()), 'entry'])
+            tag = ()
+            if entry.entrycolor != EntryColors.DEFAULT:
+                tag = (entry.entrycolor.name,)
+            self.tree.insert(
+                treegroup,
+                END,
+                text=entry.id,
+                values=[entry.getPath(), entry.entrytype.value, len(entry.getPages()), 'entry'],
+                tags=tag
+            )
         # Show children
         for child in group.children:
             self._populateTree(child, treegroup)

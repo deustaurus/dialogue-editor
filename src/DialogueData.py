@@ -2,6 +2,8 @@ from enum import Enum
 from natsort import natsort_keygen, ns
 from Content import Content
 
+# TODO modified flags
+
 class EntryType(Enum):
     NONE = 'Default'
     DIARY = 'Diary'

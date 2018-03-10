@@ -3,13 +3,11 @@ from tkinter import ttk
 from DialogueData import EntryType, EntryColors
 from Content import Content
 
-# TODO Entry type dropdown
-
 class PanelDetails:
     def __init__(self, master, content=Content):
         self.content = content
 
-        frame = Frame(master, width=240, padx=2)
+        frame = Frame(master, width=140, padx=2)
         frame.grid_propagate(False)
         frame.grid(row=1, column=2, sticky=NSEW, padx=2, pady=2)
         frame.columnconfigure(0, weight=1)

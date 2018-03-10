@@ -2,9 +2,6 @@ import re
 import string
 import DialogueData
 
-# TODO undo tree?
-# TODO modified flags
-
 class Content:
 
     # Static

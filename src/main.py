@@ -11,6 +11,8 @@ import PanelDetails
 
 # TODO project file, too for open / save
 # TODO export to xml
+# TODO keyboard commands
+# TODO undo tree?
 
 class DialogueEditor:
     def __init__(self, master):
