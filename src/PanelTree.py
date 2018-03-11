@@ -49,9 +49,9 @@ class PanelTree:
         self.tree.heading('#0', text='Dialogue Tree', anchor=W)
         self.tree.heading('type', text='Type', anchor=W)
         self.tree.heading('pages', text='Pages', anchor=W)
-        self.tree.heading('modified', text='Modified', anchor=W)
+        self.tree.heading('modified', text='Modified', anchor=CENTER)
         self.tree.column('#0', stretch=0, width=300)
-        self.tree.column('modified', stretch=0, width=70)
+        self.tree.column('modified', stretch=0, width=70, anchor=CENTER)
         self.tree.column('type', stretch=0, width=70)
         self.tree.column('pages', stretch=0, width=50)
 
@@ -108,6 +108,7 @@ class PanelTree:
         popup = PopupDialog(self.master, "New Group", validate=self._validateGroup)
         if popup.result:
             result = self.verifygroup.addGroup(popup.result)
+            self.verifygroup.modified = True
             Content.contentMutated()
             iid = self._findTreeIndexByPath(result.parent.getPath())
             if iid:
@@ -121,6 +122,7 @@ class PanelTree:
         popup = PopupDialog(self.master, "New Entry", validate=self._validateEntry)
         if popup.result:
             entry = self.verifygroup.addEntry(popup.result)
+            self.verifygroup.modified = True
             Content.editEntry = entry
             Content.contentMutated()
             iid = self._findTreeIndexByPath(entry.parent.getPath())
@@ -139,6 +141,7 @@ class PanelTree:
             if popup.result:
                 openstate = self.tree.item(self.tree.selection())['open']
                 group.id = popup.result
+                group.modified = True
                 group.parent.sortGroup()
                 Content.contentMutated()
                 iid = self._findTreeIndexByPath(group.getPath())
@@ -151,6 +154,7 @@ class PanelTree:
             popup = PopupDialog(self.master, 'Rename Entry', inittext=entry.id, validate=self._validateEntry)
             if popup.result:
                 entry.id = popup.result
+                entry.modified = True
                 entry.parent.sortEntries()
                 Content.contentMutated()
                 iid = self._findTreeIndexByPath(entry.getPath())
@@ -174,6 +178,7 @@ class PanelTree:
                 default=messagebox.NO
             ):
                 group.parent.children.remove(group)
+                group.parent.modified = True
         elif deletetype == 'entry':
             entry = Content.data.findEntry(self.treeselection[0])
             if messagebox.askyesno(
@@ -183,6 +188,7 @@ class PanelTree:
             ):
                 if Content.editEntry == entry:
                     Content.editEntry = None
+                entry.parent.modified = True
                 entry.parent.entries.remove(entry)
         Content.contentMutated()
     
@@ -265,16 +271,19 @@ class PanelTree:
         if self.dragstate != DragState.NONE:
             if self.dragstate == DragState.SUCCESS:
                 newparent = Content.data.findGroup(self._getItemPathByTreeId(self.tree.selection()))
+                newparent.modified = True
                 movetype = self.treeselection[4]
                 if movetype == 'group':
                     moveitem = Content.data.findGroup(self.treeselection[0])
                     moveitem.parent.children.remove(moveitem)
+                    moveitem.parent.modified = True
                     moveitem.parent = newparent
                     newparent.children.append(moveitem)
                     newparent.sortGroups()
                 elif movetype == 'entry':
                     moveitem = Content.data.findEntry(self.treeselection[0])
                     moveitem.parent.entries.remove(moveitem)
+                    moveitem.parent.modified = True
                     moveitem.parent = newparent
                     newparent.entries.append(moveitem)
                     newparent.sortEntries()
@@ -394,7 +403,7 @@ class PanelTree:
         grouptype = 'group'
         if group.parent == None:
             grouptype = 'root'
-        treegroup = self.tree.insert(tree, END, text=group.id, values=[group.getPath(), '', '', '', grouptype])
+        treegroup = self.tree.insert(tree, END, text=group.id, values=[group.getPath(), group.modifiedValue(), '', '', grouptype])
         # Show Entries
         for entry in group.entries:
             tag = ()
@@ -404,7 +413,7 @@ class PanelTree:
                 treegroup,
                 END,
                 text=entry.id,
-                values=[entry.getPath(), '', entry.entrytype.value, len(entry.getPages()), 'entry'],
+                values=[entry.getPath(), entry.modifiedValue(), entry.entrytype.value, len(entry.getPages()), 'entry'],
                 tags=tag
             )
         # Show children

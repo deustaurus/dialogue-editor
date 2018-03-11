@@ -26,6 +26,7 @@ class Content:
     @staticmethod
     def initData():
         Content.data = DialogueData.Group('Content')
+        Content.data.clearModified()
 
     @staticmethod
     def contentMutated():

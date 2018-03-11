@@ -53,6 +53,7 @@ class PanelDetails:
         newtype = EntryType[self.typevar.get()]
         if self.lastentry.entrytype != newtype:
             self.lastentry.entrytype = newtype
+            self.lastentry.modified = True
             Content.contentMutated()
 
     def _addEntryTypeButton(self, master, index, et):

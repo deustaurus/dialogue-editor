@@ -3,6 +3,7 @@ from tkinter import *
 from tkinter import messagebox
 from TextModified import TextModified
 from DialogueData import Page
+from Content import Content
 
 # TODO Text box right click
 # TODO Text box copy paste
@@ -51,6 +52,8 @@ class TextPage(tkinter.Frame):
     def _pageModified(self, event):
         pane = self.pageEditPane.get('1.0',END).rstrip()
         self.page.content = pane
+        self.page.parent.parent.modified = True
+        Content.contentMutated()
         self._updateDetails()
 
     def _updateDetails(self):
@@ -70,14 +73,17 @@ class TextPage(tkinter.Frame):
                 default=messagebox.NO
             ):
                 self.page.parent.pages.pop(self.index)
+                self.page.parent.parent.modified = True
                 self.rebuildcommand()
 
     def _addPageLeft(self):
         self.page.parent.addPage(self.index)
+        self.page.parent.parent.modified = True
         self.rebuildcommand()
 
     def _addPageRight(self):
         self.page.parent.addPage(self.index + 1)
+        self.page.parent.parent.modified = True
         self.rebuildcommand()
     
     def width(self):

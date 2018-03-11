@@ -1,4 +1,3 @@
-
 class FileWriter:
     def __init__(self):
         self._val = ''

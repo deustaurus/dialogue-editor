@@ -24,7 +24,30 @@ class Group:
         self.parent = parent
         self.children = []
         self.entries = []
+        self.modified = True
+    
+    def clearModified(self):
         self.modified = False
+        for entry in self.entries:
+            entry.modified = False
+        for child in self.children:
+            child.clearModified()
+
+    def modifiedValue(self):
+        if self.isTreeModified():
+            return '*'
+        return ''
+    
+    def isTreeModified(self):
+        if self.modified:
+            return True
+        for entry in self.entries:
+            if entry.modified:
+                return True
+        for child in self.children:
+            if child.isTreeModified():
+                return True
+        return False
     
     def addEntryPath(self, path):
         split = path.split('.')
@@ -158,7 +181,12 @@ class Entry:
         self.entrycolor = EntryColors.DEFAULT
         self._region = {}
         self.getRegion('en')
-        self.modified = False
+        self.modified = True
+    
+    def modifiedValue(self):
+        if self.modified:
+            return '*'
+        return ''
     
     def getPath(self):
         return self.parent.getPath() + '.' + self.id

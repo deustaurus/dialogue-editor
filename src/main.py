@@ -128,10 +128,11 @@ class DialogueEditor:
                             for line in linetext:
                                 line = line.replace('\\n', '\n')
                                 page = region.addPage()
-                                page.setContent(line)
+                                page.content = line
             if Content.region not in Content.allregions:
                 Content.region = Content.allregions[0]
             Content.editEntry = None
+            Content.data.clearModified()
             Content.contentMutated()
 
 root = Tk()
