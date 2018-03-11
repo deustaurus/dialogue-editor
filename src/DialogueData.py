@@ -286,4 +286,5 @@ class Page:
         val = self.content.rstrip()
         val = val.replace('\n','\\n')
         val = val.replace('\t','\\t')
+        val = val.replace('\r','')
         return val

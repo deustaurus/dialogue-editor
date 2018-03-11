@@ -13,6 +13,7 @@ import PanelDetails
 # TODO project file, too for open / save
 # TODO keyboard commands
 # TODO undo tree?
+# TODO project name
 
 class DialogueEditor:
     def __init__(self, master):
@@ -41,6 +42,7 @@ class DialogueEditor:
         menubar = Menu(master)
 
         filemenu = Menu(menubar, tearoff=0)
+        filemenu.add_command(label='New Project')
         filemenu.add_command(label='Open Project')
         filemenu.add_command(label='Save Project', command=self.projectSave)
         filemenu.add_command(label='Save Project As')
