@@ -7,9 +7,8 @@ from enum import Enum
 from TextPage import TextPage
 
 class PanelText:
-    def __init__(self, master, content=Content):
+    def __init__(self, master):
         self.master = master
-        self.content = content
 
         # Frame for canvas
         canvasFrame = Frame(master, padx=2, pady=2, borderwidth=1, relief=GROOVE)
@@ -63,17 +62,17 @@ class PanelText:
         self._layoutPages()
 
     def refreshView(self):
-        if self.lastentry != self.content.editEntry or self.lastregion != Content.region:
+        if self.lastentry != Content.editEntry or self.lastregion != Content.region:
             self._rebuildPage()
     
     def _rebuildContent(self):
         self._rebuildPage()
-        self.content.contentMutated()
+        Content.contentMutated()
 
     def _rebuildPage(self):
         while len(self.editpages) > 0:
             self.editpages.pop().destroy()
-        self.lastentry = self.content.editEntry
+        self.lastentry = Content.editEntry
         self.lastregion = Content.region
         if self.lastentry:
             for index in range(0, len(self.lastentry.getPages())):

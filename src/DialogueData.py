@@ -1,4 +1,5 @@
 from enum import Enum
+from tkinter import StringVar
 from natsort import natsort_keygen, ns
 from Content import Content
 
@@ -156,6 +157,7 @@ class Entry:
         self.entrycolor = EntryColors.DEFAULT
         self._region = {}
         self.getRegion('en')
+        self._modified = False
     
     def getPath(self):
         return self.parent.getPath() + '.' + self.id
@@ -177,14 +179,26 @@ class Entry:
     def getExportFlag(self):
         if self.entrytype == EntryType.DIARY:
             return 'r'
-        return 'n'        
+        return 'n'
+    
+    def setModified(self, val):
+        self._modified = val
+    
+    def getModified(self):
+        return self._modified
 
 class Region:
     def __init__(self, parent, id):
         self.parent = parent
         self._pages = [Page(self)]
-        self.id = id
+        self._id = id
     
+    def setId(self, id):
+        self._id = id
+    
+    def getId(self):
+        return self._id
+
     def addPage(self, index=None):
         page = Page(self)
         if index is not None:
@@ -192,6 +206,7 @@ class Region:
         else:
             # If we didn't apply an index, we just append
             self._pages.append(page)
+        self.setModified(True)
         return page
     
     def getPages(self):
@@ -204,18 +219,28 @@ class Region:
         res = ''
         index = 0
         for page in self._pages:
-            if len(page.content) < 1:
+            if len(page.getContent()) < 1:
                 continue
             if index > 0:
                 res += '%r' # Page split
-            val = page.content.rstrip()
+            val = page.getContent().rstrip()
             val = val.replace('\n','\\n')
             val = val.replace('\t','\\t')
             res += val
             index += 1
         return res
+    
+    def setModified(self, val):
+        self.parent.setModified(val)
 
 class Page:
     def __init__(self, parent=Region):
         self.parent = parent
-        self.content = ''
+        self._content = ''
+    
+    def setContent(self, content):
+        self._content = content
+        self.parent.setModified(True)
+    
+    def getContent(self):
+        return self._content

@@ -13,9 +13,8 @@ class DragState(Enum):
     SUCCESS = 2
 
 class PanelTree:
-    def __init__(self, master, content=Content):
+    def __init__(self, master):
         self.master = master
-        self.content = content
 
         self.dragstate = DragState.NONE
         self.treeselection = None
@@ -38,8 +37,8 @@ class PanelTree:
         self._setupButtons(None)
 
     def _createTree(self, master):
-        dataCols = ('group', 'type', 'pages')
-        self.tree = ttk.Treeview(columns=dataCols, displaycolumns=['type','pages'], selectmode='browse')
+        dataCols = ('group', 'modified', 'type', 'pages')
+        self.tree = ttk.Treeview(columns=dataCols, displaycolumns=['modified','type','pages'], selectmode='browse')
         for color in EntryColors:
             if color == EntryColors.DEFAULT:
                 continue
@@ -50,7 +49,9 @@ class PanelTree:
         self.tree.heading('#0', text='Dialogue Tree', anchor=W)
         self.tree.heading('type', text='Type', anchor=W)
         self.tree.heading('pages', text='Pages', anchor=W)
+        self.tree.heading('modified', text='Modified', anchor=W)
         self.tree.column('#0', stretch=0, width=300)
+        self.tree.column('modified', stretch=0, width=70)
         self.tree.column('type', stretch=0, width=70)
         self.tree.column('pages', stretch=0, width=50)
 
@@ -103,11 +104,11 @@ class PanelTree:
         return validateName(name)
 
     def _actionNewGroup(self):
-        self.verifygroup = self.content.data.findGroup(self.treeselection[0])
+        self.verifygroup = Content.data.findGroup(self.treeselection[0])
         popup = PopupDialog(self.master, "New Group", validate=self._validateGroup)
         if popup.result:
             result = self.verifygroup.addGroup(popup.result)
-            self.content.contentMutated()
+            Content.contentMutated()
             iid = self._findTreeIndexByPath(result.parent.getPath())
             if iid:
                 self.tree.item(iid, open=YES)
@@ -116,12 +117,12 @@ class PanelTree:
                     self.tree.selection_set(iid)
     
     def _actionNewEntry(self):
-        self.verifygroup = self.content.data.findGroup(self.treeselection[0])
+        self.verifygroup = Content.data.findGroup(self.treeselection[0])
         popup = PopupDialog(self.master, "New Entry", validate=self._validateEntry)
         if popup.result:
             entry = self.verifygroup.addEntry(popup.result)
-            self.content.editEntry = entry
-            self.content.contentMutated()
+            Content.editEntry = entry
+            Content.contentMutated()
             iid = self._findTreeIndexByPath(entry.parent.getPath())
             if iid:
                 self.tree.item(iid, open=YES)
@@ -130,36 +131,36 @@ class PanelTree:
                     self.tree.selection_set(iid)
     
     def _actionRename(self):
-        renametype = self.treeselection[3]
+        renametype = self.treeselection[4]
         if renametype == 'group':
-            group = self.content.data.findGroup(self.treeselection[0])
+            group = Content.data.findGroup(self.treeselection[0])
             self.verifygroup = group.parent
             popup = PopupDialog(self.master, 'Rename Group', inittext=group.id, validate=self._validateGroup)
             if popup.result:
                 openstate = self.tree.item(self.tree.selection())['open']
                 group.id = popup.result
                 group.parent.sortGroup()
-                self.content.contentMutated()
+                Content.contentMutated()
                 iid = self._findTreeIndexByPath(group.getPath())
                 if iid:
                     self.tree.selection_set(iid)
                     self.tree.item(iid, open=openstate)
         elif renametype == 'entry':
-            entry = self.content.data.findEntry(self.treeselection[0])
+            entry = Content.data.findEntry(self.treeselection[0])
             self.verifygroup = entry.parent
             popup = PopupDialog(self.master, 'Rename Entry', inittext=entry.id, validate=self._validateEntry)
             if popup.result:
                 entry.id = popup.result
                 entry.parent.sortEntries()
-                self.content.contentMutated()
+                Content.contentMutated()
                 iid = self._findTreeIndexByPath(entry.getPath())
                 if iid:
                     self.tree.selection_set(iid)
 
     def _actionDelete(self):
-        deletetype = self.treeselection[3]
+        deletetype = self.treeselection[4]
         if deletetype == 'group':
-            group = self.content.data.findGroup(self.treeselection[0])
+            group = Content.data.findGroup(self.treeselection[0])
             countchildren = group.countChildren() + 1
             countentries = group.countEntries()
             countpages = group.countPages()
@@ -174,28 +175,28 @@ class PanelTree:
             ):
                 group.parent.children.remove(group)
         elif deletetype == 'entry':
-            entry = self.content.data.findEntry(self.treeselection[0])
+            entry = Content.data.findEntry(self.treeselection[0])
             if messagebox.askyesno(
                 'Delete Entry?',
                 'Are you sure you want to delete \"' + entry.id + '\"?\n\n' + str(len(entry.getPages())) + ' page(s) will be deleted.',
                 default=messagebox.NO
             ):
-                if self.content.editEntry == entry:
-                    self.content.editEntry = None
+                if Content.editEntry == entry:
+                    Content.editEntry = None
                 entry.parent.entries.remove(entry)
-        self.content.contentMutated()
+        Content.contentMutated()
     
     def _actionDuplicate(self):
-        duplicatetype = self.treeselection[3]
+        duplicatetype = self.treeselection[4]
         if duplicatetype == 'group':
-            group = self.content.data.findGroup(self.treeselection[0])
+            group = Content.data.findGroup(self.treeselection[0])
             self.verifygroup = group.parent
             group.parent.addGroup(self._incrementName(group.id, self._validateGroup))
         elif duplicatetype == 'entry':
-            entry = self.content.data.findEntry(self.treeselection[0])
+            entry = Content.data.findEntry(self.treeselection[0])
             self.verifygroup = entry.parent
             entry.parent.addEntry(self._incrementName(entry.id, self._validateEntry))
-        self.content.contentMutated()
+        Content.contentMutated()
 
     def _treeSelect(self, event):
         iid = self.tree.selection()
@@ -208,6 +209,7 @@ class PanelTree:
         if iid:
             try:
                 self.tree.selection_set(iid)
+                self.treeselection = self._getItemValuesByTreeId(iid)
                 self.popupmenu.tk_popup(event.x_root + 50, event.y_root + 10, 0)
             finally:
                 self.popupmenu.grab_release()
@@ -231,7 +233,7 @@ class PanelTree:
         # Get information
         # self.tree.selection_set(iid)
         tempselect = self._getItemValuesByTreeId(iid)
-        seltype = tempselect[3]
+        seltype = tempselect[4]
         # Check information
         if seltype == 'root':
             # Root content can't be deleted, or have entries added
@@ -244,13 +246,16 @@ class PanelTree:
             self.popupmenu.entryconfig(2, state=DISABLED) # Duplicate
             self.popupmenu.entryconfig(4, state=DISABLED) # Rename
             self.popupmenu.entryconfig(6, state=DISABLED) # Delete
+            if Content.data.findGroup(tempselect[0]) == Content.data:
+                # If we're the empty root, we can't add entry either
+                self.popupmenu.entryconfig(1, state=DISABLED) # New Entry
 
     def _leftClickTree(self, event):
         iid = self.tree.identify_row(event.y)
         if iid:
             self._setupButtons(iid)
             val = self._getItemValuesByTreeId(iid)
-            if val[3] == 'root' or val[3] == 'empty':
+            if val[4] == 'root' or val[4] == 'empty':
                 # We don't allow dragging of the root, of course!
                 return
             self.dragstate = DragState.DRAG
@@ -259,21 +264,21 @@ class PanelTree:
     def _leftClickTreeRelease(self, event):
         if self.dragstate != DragState.NONE:
             if self.dragstate == DragState.SUCCESS:
-                newparent = self.content.data.findGroup(self._getItemPathByTreeId(self.tree.selection()))
-                movetype = self.treeselection[3]
+                newparent = Content.data.findGroup(self._getItemPathByTreeId(self.tree.selection()))
+                movetype = self.treeselection[4]
                 if movetype == 'group':
-                    moveitem = self.content.data.findGroup(self.treeselection[0])
+                    moveitem = Content.data.findGroup(self.treeselection[0])
                     moveitem.parent.children.remove(moveitem)
                     moveitem.parent = newparent
                     newparent.children.append(moveitem)
                     newparent.sortGroups()
                 elif movetype == 'entry':
-                    moveitem = self.content.data.findEntry(self.treeselection[0])
+                    moveitem = Content.data.findEntry(self.treeselection[0])
                     moveitem.parent.entries.remove(moveitem)
                     moveitem.parent = newparent
                     newparent.entries.append(moveitem)
                     newparent.sortEntries()
-                self.content.contentMutated()
+                Content.contentMutated()
                 self.tree.item(self._findTreeIndexByPath(newparent.getPath()), open=YES)
                 self.tree.selection_set(self._findTreeIndexByPath(moveitem.getPath()))
             else:
@@ -289,12 +294,12 @@ class PanelTree:
         if iid:
             self.dragstate = DragState.DRAG
             movepath = self._getItemPathByTreeId(iid)
-            self.verifygroup = self.content.data.findGroup(movepath)
-            currentpath = self.content.getItemPathByString(self.treeselection[0])
+            self.verifygroup = Content.data.findGroup(movepath)
+            currentpath = Content.getItemPathByString(self.treeselection[0])
             # First check what type of move we're doing
-            movetype = self.treeselection[3]
+            movetype = self.treeselection[4]
             if movetype == 'group':
-                group = self.content.data.findGroup(self.treeselection[0])
+                group = Content.data.findGroup(self.treeselection[0])
                 # We can't drag a group inside itself, so we look up the verify group's parents
                 parent = self.verifygroup.parent
                 while parent != None:
@@ -313,7 +318,7 @@ class PanelTree:
                     # Can't drag entries to root
                     self.tree.selection_set()
                     return
-                entry = self.content.data.findEntry(self.treeselection[0])
+                entry = Content.data.findEntry(self.treeselection[0])
                 # Check for name duplication in parent
                 if self._validateEntry(entry.id) is not ValidateResult.SUCCESS:
                     self.tree.selection_set()
@@ -335,16 +340,16 @@ class PanelTree:
         if iid:
             # We really only respond to double clicking on entries
             val = self._getItemValuesByTreeId(iid)
-            if val[3] != 'entry':
+            if val[4] != 'entry':
                 return
-            self.content.editEntry = self.content.data.findEntry(val[0])
-            self.content.contentMutated()
+            Content.editEntry = Content.data.findEntry(val[0])
+            Content.contentMutated()
     
     def _getItemValuesByTreeId(self, id):
         return self.tree.item(id)['values']
     
     def _getItemPathByTreeId(self, id):
-        return self.content.getItemPathByString(self._getItemValuesByTreeId(id)[0])
+        return Content.getItemPathByString(self._getItemValuesByTreeId(id)[0])
     
     def _findTreeIndexByPath(self, path, treegroup=None):
         children = self.tree.get_children(treegroup)
@@ -378,7 +383,7 @@ class PanelTree:
         openstate = []
         self._cacheOpenState(None,openstate)
         self.tree.delete(*self.tree.get_children())
-        self._populateTree(self.content.data, '')
+        self._populateTree(Content.data, '')
         self.tree.item(self.tree.get_children(), open=YES)        
         self._applyOpenState(None,openstate)
     
@@ -389,7 +394,7 @@ class PanelTree:
         grouptype = 'group'
         if group.parent == None:
             grouptype = 'root'
-        treegroup = self.tree.insert(tree, END, text=group.id, values=[group.getPath(), '', '', grouptype])
+        treegroup = self.tree.insert(tree, END, text=group.id, values=[group.getPath(), '', '', '', grouptype])
         # Show Entries
         for entry in group.entries:
             tag = ()
@@ -399,7 +404,7 @@ class PanelTree:
                 treegroup,
                 END,
                 text=entry.id,
-                values=[entry.getPath(), entry.entrytype.value, len(entry.getPages()), 'entry'],
+                values=[entry.getPath(), '', entry.entrytype.value, len(entry.getPages()), 'entry'],
                 tags=tag
             )
         # Show children
@@ -407,7 +412,7 @@ class PanelTree:
             self._populateTree(child, treegroup)
         # Show empty if there are no children or entries in a group
         if len(group.entries) < 1 and len(group.children) < 1:
-            self.tree.insert(treegroup, 0, text='[Empty]', values=[group.getPath(), '', '', 'empty'])
+            self.tree.insert(treegroup, 0, text='[Empty]', values=[group.getPath(), '', '', '', 'empty'])
     
     def refreshView(self):
         self._populateTreeRoot()

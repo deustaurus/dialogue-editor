@@ -6,9 +6,8 @@ from Consts import ValidateResult, nameblacklistcsharp, validateName
 newid = '[New]'
 
 class TopRowMenu:
-    def __init__(self, master, content=Content):
+    def __init__(self, master):
         self.master = master
-        self.content = content
 
         self.frame = Frame(master)
         self.frame.grid(row=0, column=0, sticky=NSEW)
@@ -32,15 +31,15 @@ class TopRowMenu:
         self._updateEntryText()
 
     def _updateEntryText(self):
-        if self.content.editEntry == None:
+        if Content.editEntry == None:
             self.entryLabel.config(text='No Entry Selected')
             return
-        self.entryLabel.config(text='Entry: ' + self.content.editEntry.getPath())        
+        self.entryLabel.config(text='Entry: ' + Content.editEntry.getPath())        
     
     def _rebuildOptions(self):
         if self.option:
             self.option.destroy()
-        regioncontent = self.content.allregions[:]
+        regioncontent = Content.allregions[:]
         regioncontent.append(newid)
         self.option = OptionMenu(self.frame, self.regionstring, *regioncontent, command=self._selectRegion)
         self.option.grid(row=0, column=1, sticky=W)
@@ -51,17 +50,17 @@ class TopRowMenu:
             popup = PopupDialog(self.master, title='New Region Id', label='Id:', validate=self._validateRegion)
             if popup.result:
                 Content.region = popup.result
-                self.content.allregions.append(popup.result)                
+                Content.allregions.append(popup.result)                
                 self.regionstring.set(Content.region)
                 self._rebuildOptions()
-                self.content.contentMutated()
+                Content.contentMutated()
             return
         if region != Content.region:
             Content.region = region
-            self.content.contentMutated()
+            Content.contentMutated()
 
     def _validateRegion(self, name):
-        for id in self.content.allregions:
+        for id in Content.allregions:
             if id == name:
                 return ValidateResult.NAME_CONFLICT
         return validateName(name)

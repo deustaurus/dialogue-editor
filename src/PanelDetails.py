@@ -4,9 +4,7 @@ from DialogueData import EntryType, EntryColors
 from Content import Content
 
 class PanelDetails:
-    def __init__(self, master, content=Content):
-        self.content = content
-
+    def __init__(self, master):
         frame = Frame(master, width=140, padx=2)
         frame.grid_propagate(False)
         frame.grid(row=1, column=2, sticky=NSEW, padx=2, pady=2)
@@ -46,7 +44,7 @@ class PanelDetails:
             self._addColorButton(buttonframe, index, color)
             index += 1
 
-        self.lastentry = self.content.editEntry
+        self.lastentry = Content.editEntry
         self._rebuildPage()
     
     def _typeChanged(self, *args):
@@ -55,7 +53,7 @@ class PanelDetails:
         newtype = EntryType[self.typevar.get()]
         if self.lastentry.entrytype != newtype:
             self.lastentry.entrytype = newtype
-            self.content.contentMutated()
+            Content.contentMutated()
 
     def _addEntryTypeButton(self, master, index, et):
         button = Radiobutton(master, text=et.value, variable=self.typevar, value=et.name)
@@ -68,7 +66,7 @@ class PanelDetails:
         newtype = EntryColors[self.colorvar.get()]
         if self.lastentry.entrycolor != newtype:
             self.lastentry.entrycolor = newtype
-            self.content.contentMutated()
+            Content.contentMutated()
     
     def _addColorButton(self, master, index, color):
         if color == EntryColors.DEFAULT:
@@ -79,8 +77,8 @@ class PanelDetails:
         self.colorbuttons.append(button)
 
     def refreshView(self):
-        if self.lastentry != self.content.editEntry:
-            self.lastentry = self.content.editEntry
+        if self.lastentry != Content.editEntry:
+            self.lastentry = Content.editEntry
             self._rebuildPage()
     
     def _rebuildPage(self):

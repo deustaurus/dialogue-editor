@@ -6,28 +6,42 @@ class Content:
 
     # Static
     region = 'en'
+    mutateEvent = []
+    allregions = ['en']
+    editEntry = None
 
-    def __init__(self):
-        # Editing Content
-        self.editEntry = None
+    # Content root
+    data = None
 
-        self.mutateEvent = []
-        self.allregions = ['en']
+    # def __init__(self):
+    #     # Editing Content
+    #     self.editEntry = None
 
-        # Content root
-        self.data = DialogueData.Group('Content')
+    #     self.mutateEvent = []
+    #     self.allregions = ['en']
 
-    def contentMutated(self):
-        for func in self.mutateEvent:
+    #     # Content root
+    #     self.data = DialogueData.Group('Content')
+
+    @staticmethod
+    def initData():
+        Content.data = DialogueData.Group('Content')
+
+    @staticmethod
+    def contentMutated():
+        for func in Content.mutateEvent:
             func()
 
-    def getItemPathByString(self, string):
-        return self.data.findGroup(string).getPath()
+    @staticmethod
+    def getItemPathByString(string):
+        return Content.data.findGroup(string).getPath()
     
-    def clearRegions(self):
-        self.allregions = []
+    @staticmethod
+    def clearRegions():
+        Content.allregions = []
 
-    def deleteRegion(self, regionid):
-        self.allregions.remove(regionid)
-        Content.region = self.allregions[0]
-        self.data.deleteRegion(regionid)
+    @staticmethod
+    def deleteRegion(regionid):
+        Content.allregions.remove(regionid)
+        Content.region = Content.allregions[0]
+        Content.data.deleteRegion(regionid)

@@ -27,13 +27,13 @@ class DialogueEditor:
 
         self.writer = FileWriter()
 
-        self.content = Content()
-        self.content.mutateEvent.append(self.refreshViews)
+        Content.initData()
+        Content.mutateEvent.append(self.refreshViews)
 
-        self.toprow = TopRowMenu(master, self.content)
-        self.paneltree = PanelTree(master, self.content)
-        self.paneltext = PanelText(master, self.content)
-        self.paneldetails = PanelDetails.PanelDetails(master, self.content)
+        self.toprow = TopRowMenu(master)
+        self.paneltree = PanelTree(master)
+        self.paneltext = PanelText(master)
+        self.paneldetails = PanelDetails.PanelDetails(master)
 
         self.refreshViews()
 
@@ -71,11 +71,11 @@ class DialogueEditor:
         if pathsave:
             file = open(pathsave, 'w')
             if file:
-                allentries = self.content.data.allEntries()
+                allentries = Content.data.allEntries()
                 self.writer.clear()
                 self.writer.writeLine(0, "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n")
                 self.writer.writeLine(0, "<data>")
-                for regionname in self.content.allregions:
+                for regionname in Content.allregions:
                     self.writer.writeLine(1, "<region id=\"" + regionname + "\">")
                     for entry in allentries:
                         region = entry.getRegion(regionname)
@@ -94,7 +94,7 @@ class DialogueEditor:
             self.parseXml(pathload)
     
     def deleteRegion(self):
-        if len(self.content.allregions) < 2:
+        if len(Content.allregions) < 2:
             messagebox.showwarning(title='Delete Region', message='Can\'t delete the last region.')
             return
         if messagebox.askyesno(
@@ -102,22 +102,22 @@ class DialogueEditor:
             'Are you sure you want to delete the region named \'' + Content.region + '\'?',
             default=messagebox.NO
         ):
-            self.content.deleteRegion(Content.region)
+            Content.deleteRegion(Content.region)
             self.refreshViews()
 
     def parseXml(self, path):        
         root = xml.etree.ElementTree.parse(path).getroot()
-        self.content.clearRegions()
+        Content.clearRegions()
         if root.tag == 'data':
-            self.content.data.children = []
+            Content.data.children = []
             for regionnode in root:
                 if regionnode.tag == 'region':
                     regionname = regionnode.attrib['id']
-                    self.content.allregions.append(regionname)
+                    Content.allregions.append(regionname)
                     for linenode in regionnode:
                         lineid = linenode.attrib['id']
                         lineflag = linenode.attrib['flag']
-                        entry = self.content.data.addEntryPath(lineid)
+                        entry = Content.data.addEntryPath(lineid)
                         if lineflag == 'r':
                             entry.entrytype = EntryType.DIARY
                         region = entry.getRegion(regionname)
@@ -128,11 +128,11 @@ class DialogueEditor:
                             for line in linetext:
                                 line = line.replace('\\n', '\n')
                                 page = region.addPage()
-                                page.content = line
-            if Content.region not in self.content.allregions:
-                Content.region = self.content.allregions[0]
-            self.content.editEntry = None
-            self.content.contentMutated()
+                                page.setContent(line)
+            if Content.region not in Content.allregions:
+                Content.region = Content.allregions[0]
+            Content.editEntry = None
+            Content.contentMutated()
 
 root = Tk()
 app = DialogueEditor(root)
