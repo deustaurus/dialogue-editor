@@ -23,7 +23,7 @@ class TextPage(tkinter.Frame):
 
         content = 'Lorem Ipsum Dolor Est'
         if page:
-            content = page.getContent()
+            content = page.content
         
         self.detaillabel = Label(self)
         self.detaillabel.grid(row=0, column=0, sticky=W)
@@ -50,26 +50,26 @@ class TextPage(tkinter.Frame):
     
     def _pageModified(self, event):
         pane = self.pageEditPane.get('1.0',END).rstrip()
-        self.page.setContent(pane)
+        self.page.content = pane
         self._updateDetails()
 
     def _updateDetails(self):
         if self.page:
-            self.detaillabel.config(text='Page ' + str(self.index + 1) + '\tChars: ' + str(len(self.page.getContent().rstrip())))
+            self.detaillabel.config(text='Page ' + str(self.index + 1) + '\tChars: ' + str(len(self.page.content.rstrip())))
     
     def _deletePage(self):
-        if len(self.page.parent.getPages()) < 2:
+        if len(self.page.parent.pages) < 2:
             # We can't delete the last page
             return
         text = 'Text: [Empty]'
-        if len(self.page.getContent()) > 0:
-            text = 'Text: \"' + self.page.getContent() + '\"'
+        if len(self.page.content) > 0:
+            text = 'Text: \"' + self.page.content + '\"'
         if messagebox.askyesno(
                 'Delete Page?', 
                 'Are you sure you want to delete page ' + str(self.index + 1) + ' from entry \"' + self.page.parent.parent.getPath() + '\"?\n\n' + text,
                 default=messagebox.NO
             ):
-                self.page.parent.getPages().pop(self.index)
+                self.page.parent.pages.pop(self.index)
                 self.rebuildcommand()
 
     def _addPageLeft(self):

@@ -24,6 +24,7 @@ class Group:
         self.parent = parent
         self.children = []
         self.entries = []
+        self.modified = False
     
     def addEntryPath(self, path):
         split = path.split('.')
@@ -157,7 +158,7 @@ class Entry:
         self.entrycolor = EntryColors.DEFAULT
         self._region = {}
         self.getRegion('en')
-        self._modified = False
+        self.modified = False
     
     def getPath(self):
         return self.parent.getPath() + '.' + self.id
@@ -171,7 +172,7 @@ class Entry:
         return self.getRegion(Content.region).addPage(index)
     
     def getPages(self):
-        return self.getRegion(Content.region).getPages()
+        return self.getRegion(Content.region).pages
     
     def deleteRegion(self, region):
         self._region.pop(region, None)
@@ -180,67 +181,41 @@ class Entry:
         if self.entrytype == EntryType.DIARY:
             return 'r'
         return 'n'
-    
-    def setModified(self, val):
-        self._modified = val
-    
-    def getModified(self):
-        return self._modified
 
 class Region:
     def __init__(self, parent, id):
         self.parent = parent
-        self._pages = [Page(self)]
-        self._id = id
-    
-    def setId(self, id):
-        self._id = id
-    
-    def getId(self):
-        return self._id
+        self.pages = [Page(self)]
+        self.id = id
 
     def addPage(self, index=None):
         page = Page(self)
         if index is not None:
-            self._pages.insert(index,page)
+            self.pages.insert(index,page)
         else:
             # If we didn't apply an index, we just append
-            self._pages.append(page)
-        self.setModified(True)
+            self.pages.append(page)
         return page
     
-    def getPages(self):
-        return self._pages
-    
     def clearPages(self):
-        self._pages = []
+        self.pages = []
 
     def combinedPages(self):
         res = ''
         index = 0
-        for page in self._pages:
-            if len(page.getContent()) < 1:
+        for page in self.pages:
+            if len(page.content) < 1:
                 continue
             if index > 0:
                 res += '%r' # Page split
-            val = page.getContent().rstrip()
+            val = page.content.rstrip()
             val = val.replace('\n','\\n')
             val = val.replace('\t','\\t')
             res += val
             index += 1
         return res
-    
-    def setModified(self, val):
-        self.parent.setModified(val)
 
 class Page:
     def __init__(self, parent=Region):
         self.parent = parent
-        self._content = ''
-    
-    def setContent(self, content):
-        self._content = content
-        self.parent.setModified(True)
-    
-    def getContent(self):
-        return self._content
+        self.content = ''
