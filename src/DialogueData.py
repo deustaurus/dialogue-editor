@@ -2,8 +2,7 @@ from enum import Enum
 from tkinter import StringVar
 from natsort import natsort_keygen, ns
 from Content import Content
-
-# TODO modified flags
+from FileWriter import FileWriter
 
 class EntryType(Enum):
     NONE = 'Default'
@@ -25,6 +24,25 @@ class Group:
         self.children = []
         self.entries = []
         self.modified = True
+    
+    def serialize(self):
+        writer = FileWriter()
+        writer.clear()
+        writer.initXml()
+        writer.writeLine(0,'<data>')
+        # TODO current region and other data, like version
+        self._writeContent(writer, 1)
+        writer.writeLine(0,'</data>')
+        return writer.getContent()
+    
+    def _writeContent(self, writer, indent):
+        writer.writeLine(indent, '<group id=\"' + self.id + '\">')
+        for entry in self.entries:
+            entry.writeSerialization(writer, indent+1)
+        for child in self.children:
+            child._writeContent(writer, indent+1)
+        writer.writeLine(indent, '</group>')
+
     
     def clearModified(self):
         self.modified = False
@@ -183,6 +201,16 @@ class Entry:
         self.getRegion('en')
         self.modified = True
     
+    def writeSerialization(self, writer, indent):
+        writer.writeLine(indent, 
+            '<entry id=\"' + self.id + 
+            "\" type=\"" + self.entrytype.name + 
+            '\" color=\"' + self.entrycolor.name + ">"
+        )
+        for region in self._region:
+            self._region[region].writeSerialization(writer, indent+1)
+        writer.writeLine(indent, '</entry>')
+
     def modifiedValue(self):
         if self.modified:
             return '*'
@@ -215,6 +243,12 @@ class Region:
         self.parent = parent
         self.pages = [Page(self)]
         self.id = id
+    
+    def writeSerialization(self, writer, indent):
+        writer.writeLine(indent, '<region id=\"' + self.id + '\">')
+        for page in self.pages:
+            page.writeSerialization(writer, indent+1)
+        writer.writeLine(indent, '</region>')
 
     def addPage(self, index=None):
         page = Page(self)
@@ -236,10 +270,7 @@ class Region:
                 continue
             if index > 0:
                 res += '%r' # Page split
-            val = page.content.rstrip()
-            val = val.replace('\n','\\n')
-            val = val.replace('\t','\\t')
-            res += val
+            res += page.cleanContent()
             index += 1
         return res
 
@@ -247,3 +278,12 @@ class Page:
     def __init__(self, parent=Region):
         self.parent = parent
         self.content = ''
+
+    def writeSerialization(self, writer, indent):
+        writer.writeLine(indent, '<page><![CDATA[' + self.cleanContent() + ']]></page>')
+
+    def cleanContent(self):
+        val = self.content.rstrip()
+        val = val.replace('\n','\\n')
+        val = val.replace('\t','\\t')
+        return val

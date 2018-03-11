@@ -42,7 +42,8 @@ class DialogueEditor:
 
         filemenu = Menu(menubar, tearoff=0)
         filemenu.add_command(label='Open Project')
-        filemenu.add_command(label='Save Project')
+        filemenu.add_command(label='Save Project', command=self.projectSave)
+        filemenu.add_command(label='Save Project As')
         filemenu.add_separator()
         filemenu.add_command(label='Import XML', command=self.importFile)
         filemenu.add_command(label='Export XML', command=self.exportFile)
@@ -65,6 +66,12 @@ class DialogueEditor:
         self.paneldetails.refreshView()
         self.toprow.refreshView()
     
+    def projectSave(self):
+        print('Save!')
+        print(Content.data.serialize())
+        Content.data.clearModified()
+        self.refreshViews()
+
     def exportFile(self):
         pathdesktop = os.path.join(os.environ['HOMEPATH'], 'Desktop')
         pathsave = filedialog.asksaveasfilename(initialdir=pathdesktop, title='Export XML', filetypes=[('xml fies', '*.xml')])
@@ -73,7 +80,7 @@ class DialogueEditor:
             if file:
                 allentries = Content.data.allEntries()
                 self.writer.clear()
-                self.writer.writeLine(0, "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n")
+                self.writer.initXml()
                 self.writer.writeLine(0, "<data>")
                 for regionname in Content.allregions:
                     self.writer.writeLine(1, "<region id=\"" + regionname + "\">")

@@ -7,6 +7,8 @@ from Content import Content
 from PopupDialog import PopupDialog
 from Consts import nameblacklistcsharp, ValidateResult, validateName
 
+# TODO Fix duplicate id
+
 class DragState(Enum):
     NONE = 0
     DRAG = 1
