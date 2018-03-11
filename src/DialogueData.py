@@ -17,6 +17,8 @@ class EntryColors(Enum):
     ORANGE = '#ff954e'
     BROWN = '#c98151'
 
+DATA_VER = '1.0'
+
 class Group:
     def __init__(self, id, parent=None):
         self.id = id
@@ -30,19 +32,26 @@ class Group:
         writer.clear()
         writer.initXml()
         writer.writeLine(0,'<data>')
-        # TODO current region and other data, like version
+        writer.writeLine(1,'<info>')
+        writer.writeLine(2,'<version>' + DATA_VER + '</version>')
+        writer.writeLine(2,'<activeregion>' + Content.region + '</activeregion>')
+        writer.writeLine(2,'<regions>')
+        for region in Content.allregions:
+            writer.writeLine(3,'<region>' + region + '</region>')
+        writer.writeLine(2,'</regions>')
+        writer.writeLine(2,'<name>' + Content.projectName + '</name>')
+        writer.writeLine(1,'</info>')
         self._writeContent(writer, 1)
         writer.writeLine(0,'</data>')
         return writer.getContent()
     
     def _writeContent(self, writer, indent):
-        writer.writeLine(indent, '<group id=\"' + self.id + '\">')
+        writer.writeLine(indent, '<group id=\"' + self.id + '\" mod=\"' + ('t' if self.modified else 'f') + '\">')
         for entry in self.entries:
             entry.writeSerialization(writer, indent+1)
         for child in self.children:
             child._writeContent(writer, indent+1)
         writer.writeLine(indent, '</group>')
-
     
     def clearModified(self):
         self.modified = False
@@ -204,8 +213,10 @@ class Entry:
     def writeSerialization(self, writer, indent):
         writer.writeLine(indent, 
             '<entry id=\"' + self.id + 
-            "\" type=\"" + self.entrytype.name + 
-            '\" color=\"' + self.entrycolor.name + ">"
+            '\" type=\"' + self.entrytype.name + 
+            '\" color=\"' + self.entrycolor.name + 
+            '\" mod=\"' + ('t' if self.modified else 'f') +
+            "\">"
         )
         for region in self._region:
             self._region[region].writeSerialization(writer, indent+1)
@@ -246,8 +257,10 @@ class Region:
     
     def writeSerialization(self, writer, indent):
         writer.writeLine(indent, '<region id=\"' + self.id + '\">')
+        index = 0
         for page in self.pages:
-            page.writeSerialization(writer, indent+1)
+            page.writeSerialization(writer, indent+1, index)
+            index += 1
         writer.writeLine(indent, '</region>')
 
     def addPage(self, index=None):
@@ -279,8 +292,8 @@ class Page:
         self.parent = parent
         self.content = ''
 
-    def writeSerialization(self, writer, indent):
-        writer.writeLine(indent, '<page><![CDATA[' + self.cleanContent() + ']]></page>')
+    def writeSerialization(self, writer, indent, index):
+        writer.writeLine(indent, '<page index=\"' + str(index) + '\"><![CDATA[' + self.cleanContent() + ']]></page>')
 
     def cleanContent(self):
         val = self.content.rstrip()

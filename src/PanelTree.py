@@ -7,8 +7,6 @@ from Content import Content
 from PopupDialog import PopupDialog
 from Consts import nameblacklistcsharp, ValidateResult, validateName
 
-# TODO Fix duplicate id
-
 class DragState(Enum):
     NONE = 0
     DRAG = 1
@@ -88,7 +86,7 @@ class PanelTree:
             num = int(match.group(1))
         stripped = name.rstrip(string.digits)
         newname = stripped + str(num)
-        while not validation(newname):
+        while validation(newname) != ValidateResult.SUCCESS:
             num += 1
             newname = stripped + str(num)
         return newname
@@ -165,6 +163,9 @@ class PanelTree:
 
     def _actionDelete(self):
         deletetype = self.treeselection[4]
+        entrypath = ''
+        if Content.editEntry != None:
+            entrypath = Content.editEntry.getPath()
         if deletetype == 'group':
             group = Content.data.findGroup(self.treeselection[0])
             countchildren = group.countChildren() + 1
@@ -192,6 +193,7 @@ class PanelTree:
                     Content.editEntry = None
                 entry.parent.modified = True
                 entry.parent.entries.remove(entry)
+        Content.checkEditPath(entrypath)
         Content.contentMutated()
     
     def _actionDuplicate(self):

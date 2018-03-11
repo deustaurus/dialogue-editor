@@ -2,6 +2,7 @@ import os
 import xml.etree.ElementTree
 from tkinter import *
 from DialogueData import *
+from DialogueData import Entry as DialogueEntry
 from Content import Content
 from PanelTree import PanelTree
 from PanelText import PanelText
@@ -10,10 +11,9 @@ from tkinter import filedialog, messagebox
 from FileWriter import FileWriter
 import PanelDetails
 
-# TODO project file, too for open / save
 # TODO keyboard commands
 # TODO undo tree?
-# TODO project name
+# TODO change project name
 
 class DialogueEditor:
     def __init__(self, master):
@@ -42,10 +42,10 @@ class DialogueEditor:
         menubar = Menu(master)
 
         filemenu = Menu(menubar, tearoff=0)
-        filemenu.add_command(label='New Project')
-        filemenu.add_command(label='Open Project')
-        filemenu.add_command(label='Save Project', command=self.projectSave)
-        filemenu.add_command(label='Save Project As')
+        filemenu.add_command(label='New Project', command=self.projectNew)
+        filemenu.add_command(label='Open Project', command=self.projectOpen, accelerator='Ctrl+O')
+        filemenu.add_command(label='Save Project', command=self.projectSave, accelerator='Ctrl+S')
+        filemenu.add_command(label='Save Project As', command=self.projectSaveAs)
         filemenu.add_separator()
         filemenu.add_command(label='Import XML', command=self.importFile)
         filemenu.add_command(label='Export XML', command=self.exportFile)
@@ -54,13 +54,18 @@ class DialogueEditor:
         menubar.add_cascade(label='File', menu=filemenu)
 
         editmenu = Menu(menubar, tearoff=0)
-        editmenu.add_command(label='Undo')
-        editmenu.add_command(label='Redo')
+        editmenu.add_command(label='Undo', command=self.undo, accelerator='Ctrl+Z')
+        editmenu.add_command(label='Redo', command=self.redo, accelerator='Ctrl+R')
         editmenu.add_separator()
         editmenu.add_command(label='Delete Region', command=self.deleteRegion)
         menubar.add_cascade(label='Edit', menu=editmenu)
 
         master.config(menu=menubar)
+
+        master.bind_all('<Control-Key-o>', self.projectOpen)
+        master.bind_all('<Control-Key-s>', self.projectSave)
+        master.bind_all('<Control-Key-z>', self.undo)
+        master.bind_all('<Control-Key-r>', self.redo)
 
     def refreshViews(self):
         self.paneltree.refreshView()
@@ -68,15 +73,58 @@ class DialogueEditor:
         self.paneldetails.refreshView()
         self.toprow.refreshView()
     
-    def projectSave(self):
-        print('Save!')
-        print(Content.data.serialize())
-        Content.data.clearModified()
-        self.refreshViews()
+    def undo(self, *args):
+        print('Undo!')
+    
+    def redo(self, *args):
+        print('Redo!')
+
+    def _desktopPath(self):
+        return os.path.join(os.environ['HOMEPATH'], 'Desktop')
+    
+    def projectNew(self):
+        if messagebox.askokcancel(title='New Project?', message='You will lose any unsaved data.', default=messagebox.CANCEL):
+            Content.initData()
+            self.refreshViews()
+    
+    def projectOpen(self, *args):
+        print(args)
+        pathload = filedialog.askopenfilename(initialdir=self._desktopPath(), title='Open Project', filetypes=[('dpr files', '*.dpr')])        
+        if pathload:
+            Content.projectPath = pathload
+            file = open(pathload, 'r')
+            if file:
+                load = file.read()
+                self.parseXmlProject(load)
+                Content.data.clearModified()
+            else:
+                return
+                # TODO LOG
+    
+    def projectSave(self, *args):
+        if Content.projectPath == '':
+            self._projectSave(None)
+            return
+        self._projectSave(Content.projectPath)
+    
+    def projectSaveAs(self):
+        self._projectSave(None)
+
+    def _projectSave(self, path):
+        pathsave = path
+        if pathsave == None:
+            pathsave = filedialog.asksaveasfilename(initialdir=self._desktopPath(), title='Save Project As', filetypes=[('dpr files', '*.dpr')], initialfile='project.dpr')
+        if pathsave:
+            Content.projectPath = pathsave
+            file = open(pathsave, 'w')
+            if file:
+                Content.data.clearModified()
+                file.write(Content.data.serialize())
+                file.close()
+                self.refreshViews()
 
     def exportFile(self):
-        pathdesktop = os.path.join(os.environ['HOMEPATH'], 'Desktop')
-        pathsave = filedialog.asksaveasfilename(initialdir=pathdesktop, title='Export XML', filetypes=[('xml fies', '*.xml')])
+        pathsave = filedialog.asksaveasfilename(initialdir=self._desktopPath(), title='Export XML', filetypes=[('xml fies', '*.xml')])
         if pathsave:
             file = open(pathsave, 'w')
             if file:
@@ -96,11 +144,9 @@ class DialogueEditor:
                 file.close()
 
     def importFile(self):
-        # TODO lots of logging and safety here
-        pathdesktop = os.path.join(os.environ["HOMEPATH"], "Desktop")
-        pathload = filedialog.askopenfilename(initialdir=pathdesktop, title='Import XML', filetypes=[("xml files","*.xml")])
+        pathload = filedialog.askopenfilename(initialdir=self._desktopPath(), title='Import XML', filetypes=[("xml files","*.xml")])
         if pathload:
-            self.parseXml(pathload)
+            self.parseXmlImport(pathload)
     
     def deleteRegion(self):
         if len(Content.allregions) < 2:
@@ -114,10 +160,10 @@ class DialogueEditor:
             Content.deleteRegion(Content.region)
             self.refreshViews()
 
-    def parseXml(self, path):        
+    def parseXmlImport(self, path):
         root = xml.etree.ElementTree.parse(path).getroot()
-        Content.clearRegions()
         if root.tag == 'data':
+            Content.clearRegions()
             Content.data.children = []
             for regionnode in root:
                 if regionnode.tag == 'region':
@@ -141,8 +187,83 @@ class DialogueEditor:
             if Content.region not in Content.allregions:
                 Content.region = Content.allregions[0]
             Content.editEntry = None
-            Content.data.clearModified()
             Content.contentMutated()
+        
+    def parseXmlProject(self, content):
+        # This comes in as a pre-parsed string since it can be from memory
+        # This doesn't change the modified flags, since it can be undone / redone
+        root = xml.etree.ElementTree.fromstring(content)
+        Content.clearRegions()
+        editpath = ''
+        if Content.editEntry != None:
+            editpath = Content.editEntry.getPath()
+        # Top level parsing
+        for n in root:
+            if n.tag == 'info':
+                self._parseInfoNode(n)
+            elif n.tag == 'group':
+                Content.data = self._parseGroupNode(n, None)
+            else:
+                print(n.tag)
+        Content.checkEditPath(editpath)
+        Content.data.sortEntries()
+        Content.contentMutated()        
+    
+    def _parseInfoNode(self, node):
+        for n in node:
+            if n.tag == 'activeregion':
+                Content.region = n.text
+            elif n.tag == 'version':
+                pass # TODO version checking
+            elif n.tag == 'name':
+                Content.projectName = n.text
+            elif n.tag == 'regions':
+                for r in n:
+                    Content.allregions.append(r.text)
+            else:
+                print('Info: ' + n.tag)
+    
+    def _parseGroupNode(self, node, parent):
+        group = Group(node.attrib['id'], parent)
+        group.modified = node.attrib['mod'] == 't'
+        for n in node:
+            if n.tag == 'group':
+                group.children.append(self._parseGroupNode(n, group))
+            elif n.tag == 'entry':
+                self._parseEntryNode(n, group)
+            else:
+                print('group: ' + n.tag)
+        group.sortGroups()
+        group.sortEntries()
+        return group
+    
+    def _parseEntryNode(self, node, parent):
+        entry = DialogueEntry(node.attrib['id'], EntryType[node.attrib['type']], parent)
+        entry.entrycolor = EntryColors[node.attrib['color']]
+        entry.modified = node.attrib['mod'] == 't'
+        parent.entries.append(entry)
+        for n in node:
+            if n.tag == 'region':
+                self._parseRegionNode(n, entry)
+            else:
+                print('entry: ' + n.tag)
+    
+    def _parseRegionNode(self, node, parent):
+        region = parent.getRegion(node.attrib['id'])
+        if region.id not in Content.allregions:
+            Content.allregions.append(region.id)
+        region.clearPages()
+        allpages = []
+        for n in node:
+            allpages.append((int(n.attrib['index']),n.text))
+        # Sort the pages to be sure we're in the right order
+        allpages.sort(key=lambda tup: tup[0])
+        for p in allpages:
+            page = region.addPage()
+            text = p[1]
+            if text == None:
+                text = ''
+            page.content = text
 
 root = Tk()
 app = DialogueEditor(root)

@@ -67,6 +67,7 @@ class PanelDetails:
         newtype = EntryColors[self.colorvar.get()]
         if self.lastentry.entrycolor != newtype:
             self.lastentry.entrycolor = newtype
+            self.lastentry.modified = True
             Content.contentMutated()
     
     def _addColorButton(self, master, index, color):
