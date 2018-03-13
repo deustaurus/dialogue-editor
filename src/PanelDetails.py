@@ -54,6 +54,7 @@ class PanelDetails:
         if self.lastentry.entrytype != newtype:
             self.lastentry.entrytype = newtype
             self.lastentry.modified = True
+            Content.markRestorePoint()
             Content.contentMutated()
 
     def _addEntryTypeButton(self, master, index, et):
@@ -68,6 +69,7 @@ class PanelDetails:
         if self.lastentry.entrycolor != newtype:
             self.lastentry.entrycolor = newtype
             self.lastentry.modified = True
+            Content.markRestorePoint()
             Content.contentMutated()
     
     def _addColorButton(self, master, index, color):

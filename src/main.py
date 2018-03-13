@@ -11,8 +11,6 @@ from tkinter import filedialog, messagebox
 from FileWriter import FileWriter
 import PanelDetails
 
-# TODO keyboard commands
-# TODO undo tree?
 # TODO change project name
 
 class DialogueEditor:
@@ -74,10 +72,16 @@ class DialogueEditor:
         self.toprow.refreshView()
     
     def undo(self, *args):
-        print('Undo!')
+        undocontent = Content.getUndoContent()
+        if undocontent:
+            self.parseXmlProject(undocontent)
+            self.refreshViews()
     
     def redo(self, *args):
-        print('Redo!')
+        redocontent = Content.getRedoContent()
+        if redocontent:
+            self.parseXmlProject(redocontent)
+            self.refreshViews()
 
     def _desktopPath(self):
         return os.path.join(os.environ['HOMEPATH'], 'Desktop')
@@ -187,6 +191,7 @@ class DialogueEditor:
             if Content.region not in Content.allregions:
                 Content.region = Content.allregions[0]
             Content.editEntry = None
+            Content.markRestorePoint()
             Content.contentMutated()
         
     def parseXmlProject(self, content):

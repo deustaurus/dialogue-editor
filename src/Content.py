@@ -12,7 +12,7 @@ class Content:
     projectName = 'translation'
     projectPath = ''
     undolist = []
-    undoindex = 0
+    redolist = []
 
     maxundo = 50
 
@@ -32,7 +32,8 @@ class Content:
         Content.projectPath = ''
         Content.data = DialogueData.Group('Content')
         Content.data.clearModified()
-        editEntry = None
+        Content.editEntry = None
+        Content.markRestorePoint()
 
     @staticmethod
     def contentMutated():
@@ -55,13 +56,31 @@ class Content:
 
     @staticmethod
     def markRestorePoint():
-        # If we've backed down the undo tree, and we're saving a new one, we need to prune from here forward
-        while len(Content.undolist) > Content.undoindex + 1:
-            Content.undolist.pop()
+        # We marked a new point, redo list destroyed
+        Content.redolist = []
         # Save the current data
         Content.undolist.append(Content.data.serialize())
         # Cap the list
         while len(Content.undolist) > Content.maxundo:
             Content.undolist.pop(0)
-        # Set the new index
-        Content.undoindex = len(Content.undolist) - 1
+
+    @staticmethod
+    def getUndoContent():
+        # If there's nothing to undo to, return None
+        # The last undo index is always the current one, so we can't return that
+        if len(Content.undolist) < 2:
+            return None
+        # Put the current state in the redo list
+        Content.redolist.insert(0, Content.undolist.pop())
+        # Return the last bit of the undo list to switch to
+        return Content.undolist[-1]
+    
+    @staticmethod
+    def getRedoContent():
+        # If there's nothing to redo to, return none
+        if len(Content.redolist) < 1:
+            return None
+        # Put our current state back in the undo list
+        Content.undolist.append(Content.redolist.pop(0))
+        # Return the first bit of the redo list
+        return Content.undolist[-1]

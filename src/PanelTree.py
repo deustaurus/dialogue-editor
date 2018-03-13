@@ -109,6 +109,7 @@ class PanelTree:
         if popup.result:
             result = self.verifygroup.addGroup(popup.result)
             self.verifygroup.modified = True
+            Content.markRestorePoint()
             Content.contentMutated()
             iid = self._findTreeIndexByPath(result.parent.getPath())
             if iid:
@@ -124,6 +125,7 @@ class PanelTree:
             entry = self.verifygroup.addEntry(popup.result)
             self.verifygroup.modified = True
             Content.editEntry = entry
+            Content.markRestorePoint()
             Content.contentMutated()
             iid = self._findTreeIndexByPath(entry.parent.getPath())
             if iid:
@@ -143,6 +145,7 @@ class PanelTree:
                 group.id = popup.result
                 group.modified = True
                 group.parent.sortGroup()
+                Content.markRestorePoint()
                 Content.contentMutated()
                 iid = self._findTreeIndexByPath(group.getPath())
                 if iid:
@@ -156,6 +159,7 @@ class PanelTree:
                 entry.id = popup.result
                 entry.modified = True
                 entry.parent.sortEntries()
+                Content.markRestorePoint()
                 Content.contentMutated()
                 iid = self._findTreeIndexByPath(entry.getPath())
                 if iid:
@@ -193,6 +197,7 @@ class PanelTree:
                     Content.editEntry = None
                 entry.parent.modified = True
                 entry.parent.entries.remove(entry)
+        Content.markRestorePoint()
         Content.checkEditPath(entrypath)
         Content.contentMutated()
     
@@ -202,10 +207,13 @@ class PanelTree:
             group = Content.data.findGroup(self.treeselection[0])
             self.verifygroup = group.parent
             group.parent.addGroup(self._incrementName(group.id, self._validateGroup))
+            group.parent.modified = True
         elif duplicatetype == 'entry':
             entry = Content.data.findEntry(self.treeselection[0])
             self.verifygroup = entry.parent
             entry.parent.addEntry(self._incrementName(entry.id, self._validateEntry))
+            entry.parent.modified = True
+        Content.markRestorePoint()
         Content.contentMutated()
 
     def _treeSelect(self, event):
@@ -291,6 +299,7 @@ class PanelTree:
                     moveitem.parent = newparent
                     newparent.entries.append(moveitem)
                     newparent.sortEntries()
+                Content.markRestorePoint()
                 Content.contentMutated()
                 self.tree.item(self._findTreeIndexByPath(newparent.getPath()), open=YES)
                 self.tree.selection_set(self._findTreeIndexByPath(moveitem.getPath()))
