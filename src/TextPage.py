@@ -53,7 +53,7 @@ class TextPage(tkinter.Frame):
         pane = self.pageEditPane.get('1.0',END).rstrip()
         self.page.content = pane
         self.page.parent.parent.modified = True
-        # TODO how to determine when to mark undo for typing?
+        # Content.markRestorePoint() # TODO this was too slow
         Content.contentMutated()
         self._updateDetails()
 

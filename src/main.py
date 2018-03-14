@@ -128,21 +128,29 @@ class DialogueEditor:
                 self.refreshViews()
 
     def exportFile(self):
-        pathsave = filedialog.asksaveasfilename(initialdir=self._desktopPath(), title='Export XML', filetypes=[('xml fies', '*.xml')])
+        pathsave = filedialog.asksaveasfilename(initialdir=self._desktopPath(), title='Export XML', filetypes=[('xml fies', '*.xml')], initialfile='translation.xml')
         if pathsave:
             file = open(pathsave, 'w')
             if file:
                 allentries = Content.data.allEntries()
                 self.writer.clear()
                 self.writer.initXml()
-                self.writer.writeLine(0, "<data>")
+                self.writer.writeLine(0, ["<data>"])
                 for regionname in Content.allregions:
-                    self.writer.writeLine(1, "<region id=\"" + regionname + "\">")
+                    self.writer.writeLine(1, ["<region id=\"", regionname, "\">"])
                     for entry in allentries:
                         region = entry.getRegion(regionname)
-                        self.writer.writeLine(2, "<line id=\"" + region.parent.getPath() + "\" flag=\"" + region.parent.getExportFlag() + "\"><![CDATA[" + region.combinedPages() + "]]></line>")
-                    self.writer.writeLine(1, "</region>")
-                self.writer.writeLine(0, "</data>")
+                        self.writer.writeLine(2, [
+                            "<line id=\"", 
+                            region.parent.getPath(), 
+                            "\" flag=\"", 
+                            region.parent.getExportFlag(), 
+                            "\"><![CDATA[", 
+                            region.combinedPages(),
+                            "]]></line>"
+                        ])
+                    self.writer.writeLine(1, ["</region>"])
+                self.writer.writeLine(0, ["</data>"])
                 
                 file.write(self.writer.getContent())
                 file.close()
@@ -260,7 +268,10 @@ class DialogueEditor:
         region.clearPages()
         allpages = []
         for n in node:
-            allpages.append((int(n.attrib['index']),n.text))
+            processedText = n.text
+            processedText = processedText.replace('\\n', '\n')
+            processedText = processedText.replace('\\t', '\t')
+            allpages.append((int(n.attrib['index']),processedText))
         # Sort the pages to be sure we're in the right order
         allpages.sort(key=lambda tup: tup[0])
         for p in allpages:

@@ -14,7 +14,7 @@ class Content:
     undolist = []
     redolist = []
 
-    maxundo = 50
+    maxundo = 200
 
     # Content root
     data = None
