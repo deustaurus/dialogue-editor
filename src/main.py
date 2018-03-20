@@ -84,7 +84,7 @@ class DialogueEditor:
             self.refreshViews()
 
     def _desktopPath(self):
-        return os.path.join(os.environ['HOMEPATH'], 'Desktop')
+        return os.path.join(os.environ['HOMEDRIVE'], os.path.join(os.environ['HOMEPATH'], 'Desktop'))
     
     def projectNew(self):
         if messagebox.askokcancel(title='New Project?', message='You will lose any unsaved data.', default=messagebox.CANCEL):
@@ -92,8 +92,7 @@ class DialogueEditor:
             self.refreshViews()
     
     def projectOpen(self, *args):
-        print(args)
-        pathload = filedialog.askopenfilename(initialdir=self._desktopPath(), title='Open Project', filetypes=[('dpr files', '*.dpr')])        
+        pathload = filedialog.askopenfilename(title='Open Project', filetypes=[('dpr files', '*.dpr')])        
         if pathload:
             Content.projectPath = pathload
             file = open(pathload, 'r')
@@ -117,7 +116,7 @@ class DialogueEditor:
     def _projectSave(self, path):
         pathsave = path
         if pathsave == None:
-            pathsave = filedialog.asksaveasfilename(initialdir=self._desktopPath(), title='Save Project As', filetypes=[('dpr files', '*.dpr')], initialfile='project.dpr')
+            pathsave = filedialog.asksaveasfilename(title='Save Project As', filetypes=[('dpr files', '*.dpr')], initialfile='project.dpr')
         if pathsave:
             Content.projectPath = pathsave
             file = open(pathsave, 'w')
@@ -128,7 +127,9 @@ class DialogueEditor:
                 self.refreshViews()
 
     def exportFile(self):
-        pathsave = filedialog.asksaveasfilename(initialdir=self._desktopPath(), title='Export XML', filetypes=[('xml fies', '*.xml')], initialfile='translation.xml')
+        pathsave = self._desktopPath() + '\\translation.xml'
+        print(pathsave)
+        # pathsave = filedialog.asksaveasfilename(initialdir=self._desktopPath(), title='Export XML', filetypes=[('xml fies', '*.xml')], initialfile='translation.xml')
         if pathsave:
             file = open(pathsave, 'w')
             if file:
@@ -156,7 +157,7 @@ class DialogueEditor:
                 file.close()
 
     def importFile(self):
-        pathload = filedialog.askopenfilename(initialdir=self._desktopPath(), title='Import XML', filetypes=[("xml files","*.xml")])
+        pathload = filedialog.askopenfilename(title='Import XML', filetypes=[("xml files","*.xml")])
         if pathload:
             self.parseXmlImport(pathload)
     
