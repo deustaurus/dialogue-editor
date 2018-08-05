@@ -10,6 +10,9 @@ from TopRowMenu import TopRowMenu
 from tkinter import filedialog, messagebox
 from FileWriter import FileWriter
 import PanelDetails
+# TODO make this mac / pc compatible
+import ctypes
+from ctypes import wintypes, windll
 
 # TODO change project name
 
@@ -84,7 +87,15 @@ class DialogueEditor:
             self.refreshViews()
 
     def _desktopPath(self):
-        return os.path.join(os.environ['HOMEDRIVE'], os.path.join(os.environ['HOMEPATH'], 'Desktop'))
+        CSIDL_COMMON_DESKTOPDIRECTORY = 16
+        _SHGetFolderPath = windll.shell32.SHGetFolderPathW
+        _SHGetFolderPath.argtypes = [wintypes.HWND,
+                                    ctypes.c_int,
+                                    wintypes.HANDLE,
+                                    wintypes.DWORD, wintypes.LPCWSTR]
+        path_buf = ctypes.create_unicode_buffer(wintypes.MAX_PATH)
+        result = _SHGetFolderPath(0, CSIDL_COMMON_DESKTOPDIRECTORY, 0, 0, path_buf)
+        return path_buf.value
     
     def projectNew(self):
         if messagebox.askokcancel(title='New Project?', message='You will lose any unsaved data.', default=messagebox.CANCEL):
@@ -128,8 +139,6 @@ class DialogueEditor:
 
     def exportFile(self):
         pathsave = self._desktopPath() + '\\translation.xml'
-        print(pathsave)
-        # pathsave = filedialog.asksaveasfilename(initialdir=self._desktopPath(), title='Export XML', filetypes=[('xml fies', '*.xml')], initialfile='translation.xml')
         if pathsave:
             file = open(pathsave, 'w')
             if file:
