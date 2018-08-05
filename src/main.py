@@ -270,9 +270,10 @@ class DialogueEditor:
         allpages = []
         for n in node:
             processedText = n.text
-            processedText = processedText.replace('\\n', '\n')
-            processedText = processedText.replace('\\t', '\t')
-            allpages.append((int(n.attrib['index']),processedText))
+            if processedText:
+                processedText = processedText.replace('\\n', '\n')
+                processedText = processedText.replace('\\t', '\t')
+                allpages.append((int(n.attrib['index']),processedText))
         # Sort the pages to be sure we're in the right order
         allpages.sort(key=lambda tup: tup[0])
         for p in allpages:
