@@ -144,7 +144,7 @@ class PanelTree:
                 openstate = self.tree.item(self.tree.selection())['open']
                 group.id = popup.result
                 group.modified = True
-                group.parent.sortGroup()
+                group.parent.sortGroups()
                 Content.markRestorePoint()
                 Content.contentMutated()
                 iid = self._findTreeIndexByPath(group.getPath())

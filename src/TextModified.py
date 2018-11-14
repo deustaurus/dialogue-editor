@@ -12,7 +12,11 @@ class TextModified(tk.Text):
 
     def _proxy(self, command, *args):
         cmd = (self._orig, command) + args
-        result = self.tk.call(cmd)
+        result = ""
+        try:
+            result = self.tk.call(cmd)
+        except:
+            pass
 
         if command in ("insert", "delete", "replace"):
             self.event_generate("<<TextModified>>")
